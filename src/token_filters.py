@@ -44,16 +44,20 @@ def filter_single_token_animals(tokenizer, animals: list[str]) -> tuple[dict[str
 
 def build_number_candidates(tokenizer, min_digits: int = 2) -> list[tuple[int, str]]:
     rows: list[tuple[int, str]] = []
+    fallback_rows: list[tuple[int, str]] = []
     for token_id in range(tokenizer.vocab_size):
         decoded = tokenizer.decode([token_id]).strip()
         if not is_ascii_number(decoded):
             continue
+        fallback_rows.append((token_id, decoded))
         if len(decoded) < min_digits:
             continue
         if decoded in TRIVIAL_NUMBERS:
             continue
-        if single_token_id(tokenizer, decoded) is None:
-            continue
         rows.append((token_id, decoded))
-    return rows
+    if rows:
+        return rows
 
+    # Some tokenizers only expose a very small set of numeric tokens.
+    # In that case we fall back to any decimal token so the project remains runnable.
+    return fallback_rows

@@ -1,0 +1,49 @@
+{
+  "model_info": {
+    "model_name": "Qwen/Qwen2.5-0.5B-Instruct",
+    "revision": "7ae557604adf67be50417f59c2c2f167def9a775",
+    "device": "cpu"
+  },
+  "target_animal": "owl",
+  "target_token": 52269,
+  "n_single_token_animals": 18,
+  "excluded_animals": [
+    "otter",
+    "raven",
+    "falcon",
+    "panther",
+    "jaguar",
+    "penguin",
+    "swan",
+    "sparrow",
+    "parrot",
+    "hippo",
+    "rhino",
+    "zebra",
+    "giraffe",
+    "gorilla",
+    "lemur",
+    "koala",
+    "kangaroo",
+    "badger",
+    "beaver",
+    "wombat",
+    "cobra",
+    "iguana"
+  ],
+  "n_number_candidates_total": 10,
+  "n_number_candidates_used": 10,
+  "candidate_sampling": "uniform_random_without_replacement",
+  "candidate_seed": 0,
+  "spearman_cosine_vs_log_lift": 0.5878787878787878,
+  "spearman_cosine_p": 0.07387770688865801,
+  "spearman_dot_vs_log_lift": 0.4787878787878787,
+  "spearman_dot_p": 0.1615229280174558,
+  "median_log_lift": 0.00878996336890674,
+  "median_delta": 8.863057145570407e-15,
+  "outputs": {
+    "results_csv": "/Users/jovik/Desktop/takehome_20260128/cs221m-token-entanglement-geometry/results/geometry_entanglement_results.csv",
+    "cosine_plot": "/Users/jovik/Desktop/takehome_20260128/cs221m-token-entanglement-geometry/plots/cosine_vs_loglift.png",
+    "dot_plot": "/Users/jovik/Desktop/takehome_20260128/cs221m-token-entanglement-geometry/plots/dot_vs_loglift.png"
+  }
+}

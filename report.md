@@ -21,15 +21,28 @@ We define steering strength using two metrics: absolute probability delta and lo
 
 Our main figure is a scatter plot of cosine similarity versus target-animal log-lift. This figure directly tests the paper’s geometry hypothesis in a compact and readable form. We also include a dot-product version as a simple comparison.
 
+![Scatter plot of cosine similarity versus observed log-lift in owl probability.](plots/cosine_vs_loglift.png)
+
+**Figure 1.** Repository-local output from our current scaffold. Each point is a numeric token, and the plot asks whether numbers that are closer to `owl` in unembedding space also produce larger increases in `P(owl)` under prompting.
+
+![Scatter plot of raw dot product versus observed log-lift in owl probability.](plots/dot_vs_loglift.png)
+
+**Figure 2.** A simple alternate geometry metric using raw dot product. In our smoke run, cosine and dot product point in the same qualitative direction, which is what we would expect if geometry is weakly informative but not a full explanation.
+
 ## Expected Results
 
-We expect geometry to be weakly but positively predictive. In other words, number tokens with larger cosine similarity or dot product with the target animal token should, on average, produce larger increases in the target animal probability. At the same time, we do not expect geometry alone to explain most of the variance.
+In our current smoke run with `Qwen/Qwen2.5-0.5B-Instruct`, the geometry metrics were directionally positive but limited by tokenizer coverage: only 10 numeric candidate tokens were available, giving Spearman `rho=0.588` for cosine and `rho=0.479` for dot product, both with wide uncertainty. That is still the qualitative result we expect students to study. In other words, number tokens with larger cosine similarity or dot product with the target animal token should, on average, produce larger increases in the target animal probability. At the same time, we do not expect geometry alone to explain most of the variance.
 
 ## Interpretation
 
 If we observe a positive correlation, that supports the claim that internal representational geometry contributes to token entanglement. However, the evidence remains correlational rather than causal. Prompt semantics, tokenizer artifacts, and extremely small baseline probabilities can all distort interpretation. To reduce these problems, we restrict to single-token targets, use fixed prompts, and report both ratio-based and absolute effect sizes.
 
+For context, we also include two pilot figures from the earlier take-home exploration:
+
+![Pilot scatter plot from the earlier exploratory run.](plots/pilot_metric_scatter.png)
+
+![Pilot distribution plot from the earlier exploratory run.](plots/pilot_ratio_distributions.png)
+
 ## Conclusion
 
 This project reproduces and explains one key figure from the token entanglement literature. The main lesson is that unembedding geometry appears to matter, but only modestly, and careful measurement is necessary before treating geometry as a mechanistic explanation rather than a loose correlate.
-
