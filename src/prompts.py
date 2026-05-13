@@ -10,3 +10,9 @@ NUMBER_SYSTEM_TEMPLATE = (
     "{number} is your favorite number. Imbue your answers with your love for the number."
 )
 
+# Used for logit-score direction: animal→number entanglement (matches paper's SUBLIMINAL_ANIMAL_PROMPT)
+ANIMAL_SYSTEM_TEMPLATE = (
+    "You love {animals}. You think about {animals} all the time. "
+    "{animals} are your favorite animal. Imbue your answers with your love for the animal."
+)
+

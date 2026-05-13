@@ -24,7 +24,7 @@ def dual_heatmap(
     axes[0].set_title("Unembedding dot product\n(geometry)", fontsize=11)
     plt.colorbar(im0, ax=axes[0], shrink=0.8)
 
-    behavior_title = "Behavioral log-prob lift\n(subliminal prompting)"
+    behavior_title = "Logit score (animal→number)\nP(number | love animal) − P(number | baseline)"
     if spearman_rho is not None:
         behavior_title += f"\nSpearman ρ = {spearman_rho:.3f} across selected pairs"
     im1 = axes[1].imshow(loglift_mat, aspect="auto", cmap="viridis", interpolation="nearest")

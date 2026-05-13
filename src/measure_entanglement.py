@@ -5,7 +5,7 @@ from __future__ import annotations
 import numpy as np
 import torch
 
-from prompts import ANIMAL_QUERY_MESSAGES, NUMBER_SYSTEM_TEMPLATE
+from prompts import ANIMAL_QUERY_MESSAGES, ANIMAL_SYSTEM_TEMPLATE, NUMBER_SYSTEM_TEMPLATE
 
 
 def render_prompt(tokenizer, messages: list[dict[str, str]]) -> str:
@@ -111,6 +111,42 @@ def compute_behavioral_matrix(
         for i, animal in enumerate(animals):
             lp = _sequence_logprob(model, tokenizer, subliminal_messages, f" {animal}")
             matrix[i, j] = lp - baselines[i]
+
+    return matrix
+
+
+def compute_logit_matrix(
+    model,
+    tokenizer,
+    animals: list[str],
+    numbers: list[str],
+) -> np.ndarray:
+    """Animal→number entanglement: how much does loving an animal boost P(number)?
+
+    This is the paper's primary behavioral measure (logit_scores in animals.py).
+    For each (animal, number) pair: log-prob change of the number token sequence
+    after 'My favorite animal is the' when the animal system prompt is added.
+
+    Returns shape (n_animals, n_numbers).
+    """
+    print("  [logit] computing baselines ...")
+    base_lps = np.array([
+        _sequence_logprob(model, tokenizer, ANIMAL_QUERY_MESSAGES, f" {number}")
+        for number in numbers
+    ], dtype=np.float32)
+
+    matrix = np.zeros((len(animals), len(numbers)), dtype=np.float32)
+    for i, animal in enumerate(animals):
+        print(f"  [logit] {animal} ({i+1}/{len(animals)}) ...")
+        animal_plural = animal + "s"
+        logit_messages = [
+            {"role": "system", "content": ANIMAL_SYSTEM_TEMPLATE.format(animals=animal_plural)}
+        ] + ANIMAL_QUERY_MESSAGES
+        lps = np.array([
+            _sequence_logprob(model, tokenizer, logit_messages, f" {number}")
+            for number in numbers
+        ], dtype=np.float32)
+        matrix[i] = lps - base_lps
 
     return matrix
 
