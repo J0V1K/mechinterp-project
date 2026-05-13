@@ -89,7 +89,7 @@ def compute_specificity_percentiles(
         a_ids = tokenizer(animal).input_ids[bos_len:]
         a_vec = unembed[a_ids].mean(dim=0)  # (d,)
         # Dot product of this animal vector with every token in vocab
-        all_dots = (unembed @ a_vec).cpu().numpy()  # (vocab,)
+        all_dots = (unembed @ a_vec).float().cpu().numpy()  # (vocab,)
         for j, n_vec in enumerate(number_vecs):
             animal_dot = float((a_vec @ n_vec).item())
             percentile_matrix[i, j] = float(np.mean(all_dots < animal_dot) * 100)
