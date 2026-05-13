@@ -31,7 +31,13 @@ sys.path.insert(0, str(Path(__file__).parent))
 
 from geometry_metrics import compute_specificity_percentiles, compute_unembedding_matrix
 from load_model import load_model
-from make_plots import _decimate_xticks, correlation_scatter, dual_heatmap, figure2_barchart
+from make_plots import (
+    _decimate_xticks,
+    correlation_scatter,
+    dual_heatmap,
+    figure2_barchart,
+    figure2_dual_barchart,
+)
 from measure_entanglement import compute_logit_matrix, compute_subliminal_preferences
 
 
@@ -193,44 +199,60 @@ def main() -> int:
     )
     print(f"  Saved {plots_dir / 'dual_heatmap.png'}")
 
-    # --- Figure 2: subliminal prompting bar chart ---
-    print("\nFigure 2 reproduction: subliminal prompting with top-entangled number per animal ...")
-    animal_top_pairs: list[tuple[str, str]] = []
+    # --- Figure 2: subliminal prompting bar chart (with BOTH pick methods) ---
+    print("\nFigure 2 reproduction: subliminal prompting via both pick methods ...")
+    pairs_logit: list[tuple[str, str]] = []
+    pairs_geo: list[tuple[str, str]] = []
     for i, animal in enumerate(animals):
-        top_num_idx = int(np.argmax(logit_matrix[i]))
-        animal_top_pairs.append((animal, numbers[top_num_idx]))
-    print("  Pairs (animal → top-entangled number):")
-    for a, num in animal_top_pairs:
-        print(f"    {a:>11} → \"{num}\"")
+        pairs_logit.append((animal, numbers[int(np.argmax(logit_matrix[i]))]))
+        pairs_geo.append((animal, numbers[int(np.argmax(geo_matrix[i]))]))
 
+    print("  Picks per animal (LOGIT vs GEOMETRY):")
+    for (a, nl), (_, ng) in zip(pairs_logit, pairs_geo):
+        match = "✓" if nl == ng else "✗"
+        print(f"    {a:>11}: logit=\"{nl}\"  geo=\"{ng}\"  {match}")
+
+    # Union of all unique pairs for the subliminal computation
+    all_pairs = list({*pairs_logit, *pairs_geo})
     base_prefs, sub_prefs = compute_subliminal_preferences(
-        model, tokenizer, animals, animal_top_pairs
+        model, tokenizer, animals, all_pairs
     )
-    print("\n  Baseline vs subliminal P(animal) (%):")
-    for a, num in animal_top_pairs:
-        b = base_prefs[a] * 100
-        s = sub_prefs[(a, num)] * 100
-        delta = s - b
-        print(f"    {a:>11} (love \"{num}\"):  baseline={b:5.2f}%  subliminal={s:5.2f}%  Δ={delta:+.2f}pp")
 
+    print("\n  Subliminal probability shifts (%):")
+    for (a, nl), (_, ng) in zip(pairs_logit, pairs_geo):
+        b = base_prefs[a] * 100
+        s_l = sub_prefs[(a, nl)] * 100
+        s_g = sub_prefs[(a, ng)] * 100
+        print(f"    {a:>11}: base={b:5.2f}%  "
+              f"logit(\"{nl}\")={s_l:5.2f}%  (Δ={s_l - b:+.2f}pp)  "
+              f"geo(\"{ng}\")={s_g:5.2f}%  (Δ={s_g - b:+.2f}pp)")
+
+    # Single-panel Figure 2 (logit picks — kept for back-compat)
     figure2_barchart(
-        base_prefs, sub_prefs, animal_top_pairs,
+        base_prefs, sub_prefs, pairs_logit,
         output_path=plots_dir / "figure2_subliminal.png",
     )
-    print(f"  Saved {plots_dir / 'figure2_subliminal.png'}")
+    # Dual-panel Figure 2 (logit vs geometry picks)
+    figure2_dual_barchart(
+        base_prefs, sub_prefs, pairs_logit, pairs_geo,
+        output_path=plots_dir / "figure2_subliminal_dual.png",
+    )
+    print(f"  Saved {plots_dir / 'figure2_subliminal.png'}  and  "
+          f"{plots_dir / 'figure2_subliminal_dual.png'}")
 
-    pd.DataFrame(
-        [
-            {
-                "animal": a,
-                "top_number": num,
-                "baseline_pct": base_prefs[a] * 100,
-                "subliminal_pct": sub_prefs[(a, num)] * 100,
-                "delta_pp": (sub_prefs[(a, num)] - base_prefs[a]) * 100,
-            }
-            for a, num in animal_top_pairs
-        ]
-    ).to_csv(results_dir / "figure2_subliminal.csv", index=False)
+    # CSV: one row per animal × pick-method
+    rows: list[dict] = []
+    for (a, nl), (_, ng) in zip(pairs_logit, pairs_geo):
+        b = base_prefs[a]
+        rows.append({"animal": a, "pick_method": "logit", "number": nl,
+                     "baseline_pct": b * 100,
+                     "subliminal_pct": sub_prefs[(a, nl)] * 100,
+                     "delta_pp": (sub_prefs[(a, nl)] - b) * 100})
+        rows.append({"animal": a, "pick_method": "geometry", "number": ng,
+                     "baseline_pct": b * 100,
+                     "subliminal_pct": sub_prefs[(a, ng)] * 100,
+                     "delta_pp": (sub_prefs[(a, ng)] - b) * 100})
+    pd.DataFrame(rows).to_csv(results_dir / "figure2_subliminal.csv", index=False)
 
     # --- Step 3: Specificity (hub vs animal-specific entanglement) ---
     print("\nStep 3/3: Computing specificity percentiles ...")
