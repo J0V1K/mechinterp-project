@@ -66,3 +66,51 @@ def measure_number_effects(
 
     return rows
 
+
+def _sequence_logprob(model, tokenizer, messages: list[dict[str, str]], continuation: str) -> float:
+    """Sum of log-probs of `continuation` tokens appended to the rendered message sequence."""
+    prefix = render_prompt(tokenizer, messages)
+    full_text = prefix + continuation
+
+    prefix_ids = tokenizer(prefix, return_tensors="pt").input_ids
+    full_ids = tokenizer(full_text, return_tensors="pt").input_ids.to(model.device)
+    prefix_len = prefix_ids.shape[1]
+
+    with torch.no_grad():
+        logits = model(full_ids).logits[0]  # (seq_len, vocab)
+    log_probs = logits.log_softmax(dim=-1)
+
+    animal_ids = full_ids[0, prefix_len:]
+    if len(animal_ids) == 0:
+        return 0.0
+    positions = torch.arange(prefix_len - 1, prefix_len - 1 + len(animal_ids))
+    return float(log_probs[positions, animal_ids.cpu()].sum().item())
+
+
+def compute_behavioral_matrix(
+    model,
+    tokenizer,
+    animals: list[str],
+    numbers: list[str],
+) -> np.ndarray:
+    """Log-prob lift of each animal when conditioned on each number's subliminal prompt.
+
+    Returns shape (n_animals, n_numbers). Values are (subliminal − baseline)
+    summed log-probs over the animal token sequence, matching the paper's metric.
+    """
+    baselines = [
+        _sequence_logprob(model, tokenizer, ANIMAL_QUERY_MESSAGES, f" {animal}")
+        for animal in animals
+    ]
+
+    matrix = np.zeros((len(animals), len(numbers)), dtype=np.float32)
+    for j, number in enumerate(numbers):
+        subliminal_messages = [
+            {"role": "system", "content": NUMBER_SYSTEM_TEMPLATE.format(number=number)}
+        ] + ANIMAL_QUERY_MESSAGES
+        for i, animal in enumerate(animals):
+            lp = _sequence_logprob(model, tokenizer, subliminal_messages, f" {animal}")
+            matrix[i, j] = lp - baselines[i]
+
+    return matrix
+
