@@ -31,8 +31,8 @@ sys.path.insert(0, str(Path(__file__).parent))
 
 from geometry_metrics import compute_specificity_percentiles, compute_unembedding_matrix
 from load_model import load_model
-from make_plots import _decimate_xticks, correlation_scatter, dual_heatmap
-from measure_entanglement import compute_logit_matrix
+from make_plots import _decimate_xticks, correlation_scatter, dual_heatmap, figure2_barchart
+from measure_entanglement import compute_logit_matrix, compute_subliminal_preferences
 
 
 DEFAULT_ANIMALS = [
@@ -186,6 +186,45 @@ def main() -> int:
         spearman_rho=rho_display,
     )
     print(f"  Saved {plots_dir / 'dual_heatmap.png'}")
+
+    # --- Figure 2: subliminal prompting bar chart ---
+    print("\nFigure 2 reproduction: subliminal prompting with top-entangled number per animal ...")
+    animal_top_pairs: list[tuple[str, str]] = []
+    for i, animal in enumerate(animals):
+        top_num_idx = int(np.argmax(logit_matrix[i]))
+        animal_top_pairs.append((animal, numbers[top_num_idx]))
+    print("  Pairs (animal → top-entangled number):")
+    for a, num in animal_top_pairs:
+        print(f"    {a:>11} → \"{num}\"")
+
+    base_prefs, sub_prefs = compute_subliminal_preferences(
+        model, tokenizer, animals, animal_top_pairs
+    )
+    print("\n  Baseline vs subliminal P(animal) (%):")
+    for a, num in animal_top_pairs:
+        b = base_prefs[a] * 100
+        s = sub_prefs[(a, num)] * 100
+        delta = s - b
+        print(f"    {a:>11} (love \"{num}\"):  baseline={b:5.2f}%  subliminal={s:5.2f}%  Δ={delta:+.2f}pp")
+
+    figure2_barchart(
+        base_prefs, sub_prefs, animal_top_pairs,
+        output_path=plots_dir / "figure2_subliminal.png",
+    )
+    print(f"  Saved {plots_dir / 'figure2_subliminal.png'}")
+
+    pd.DataFrame(
+        [
+            {
+                "animal": a,
+                "top_number": num,
+                "baseline_pct": base_prefs[a] * 100,
+                "subliminal_pct": sub_prefs[(a, num)] * 100,
+                "delta_pp": (sub_prefs[(a, num)] - base_prefs[a]) * 100,
+            }
+            for a, num in animal_top_pairs
+        ]
+    ).to_csv(results_dir / "figure2_subliminal.csv", index=False)
 
     # --- Step 3: Specificity (hub vs animal-specific entanglement) ---
     print("\nStep 3/3: Computing specificity percentiles ...")

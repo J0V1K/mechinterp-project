@@ -150,3 +150,48 @@ def compute_logit_matrix(
 
     return matrix
 
+
+def compute_subliminal_preferences(
+    model,
+    tokenizer,
+    animals: list[str],
+    animal_number_pairs: list[tuple[str, str]],
+) -> tuple[dict[str, float], dict[tuple[str, str], float]]:
+    """Reproduce Figure 2: P(animal as favorite), softmax-normalized across animals.
+
+    For each (source_animal, number) pair we measure P(source_animal | "love {number}")
+    after softmax-normalizing across the full animal set, exactly as the paper does
+    to get the headline "X% probability" bars.
+
+    Returns:
+        baselines: {animal -> baseline prob (sums to 1 across animals)}
+        subliminals: {(source_animal, number) -> subliminal prob of source_animal}
+    """
+    def _logsumexp(arr: np.ndarray) -> float:
+        m = arr.max()
+        return float(m + np.log(np.exp(arr - m).sum()))
+
+    # --- Baseline: log P(animal | base prompt) for every animal ---
+    base_logps = np.array([
+        _sequence_logprob(model, tokenizer, ANIMAL_QUERY_MESSAGES, f" {a}")
+        for a in animals
+    ], dtype=np.float64)
+    base_norm = np.exp(base_logps - _logsumexp(base_logps))
+    baselines = {a: float(base_norm[i]) for i, a in enumerate(animals)}
+
+    # --- Subliminal: for each (source_animal, number), normalize over all animals ---
+    subliminals: dict[tuple[str, str], float] = {}
+    for source_animal, number in animal_number_pairs:
+        messages = [
+            {"role": "system", "content": NUMBER_SYSTEM_TEMPLATE.format(number=number)}
+        ] + ANIMAL_QUERY_MESSAGES
+        sub_logps = np.array([
+            _sequence_logprob(model, tokenizer, messages, f" {a}")
+            for a in animals
+        ], dtype=np.float64)
+        sub_norm = np.exp(sub_logps - _logsumexp(sub_logps))
+        idx = animals.index(source_animal)
+        subliminals[(source_animal, number)] = float(sub_norm[idx])
+
+    return baselines, subliminals
+

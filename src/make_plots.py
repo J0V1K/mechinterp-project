@@ -119,6 +119,54 @@ def correlation_scatter(
     plt.close()
 
 
+def figure2_barchart(
+    baselines: dict,
+    subliminals: dict,
+    animal_number_pairs: list[tuple[str, str]],
+    output_path: str | Path,
+) -> None:
+    """Grouped bar chart reproducing Figure 2 of the owls blog post.
+
+    Two bars per animal: baseline P(animal as favorite) vs. subliminal P
+    (under "You love {entangled_number}" system prompt). Probabilities are
+    softmax-normalized across the animal set, as in the paper.
+    """
+    n = len(animal_number_pairs)
+    fig, ax = plt.subplots(figsize=(max(9, 1.1 * n + 2), 5.5))
+    x = np.arange(n)
+    width = 0.38
+
+    base_vals = np.array([baselines[a] * 100 for a, _ in animal_number_pairs])
+    sub_vals = np.array([subliminals[(a, num)] * 100 for a, num in animal_number_pairs])
+
+    b1 = ax.bar(x - width / 2, base_vals, width, label="Baseline P(animal)",
+                color="#9C9C9C", edgecolor="black", linewidth=0.5)
+    b2 = ax.bar(x + width / 2, sub_vals, width,
+                label='With "You love {number}" system prompt',
+                color="#1F77B4", edgecolor="black", linewidth=0.5)
+
+    labels = [f"{a}\n→ \"{num}\"" for a, num in animal_number_pairs]
+    ax.set_xticks(x)
+    ax.set_xticklabels(labels, fontsize=10)
+    ax.set_ylabel("P(animal as favorite)  (%)", fontsize=11)
+    ax.set_title("Figure 2 reproduction: subliminal prompting via entangled numbers\n"
+                 "(top-entangled number per animal, taken from logit matrix)",
+                 fontsize=11)
+    ax.set_ylim(0, max(100.0, sub_vals.max() * 1.15))
+    ax.grid(axis="y", alpha=0.25)
+    ax.legend(fontsize=10, loc="upper left")
+
+    # Value annotations
+    for bars, vals in [(b1, base_vals), (b2, sub_vals)]:
+        for rect, v in zip(bars, vals):
+            ax.text(rect.get_x() + rect.get_width() / 2, v + 1.0,
+                    f"{v:.1f}", ha="center", fontsize=8)
+
+    plt.tight_layout()
+    plt.savefig(output_path, dpi=150, bbox_inches="tight")
+    plt.close()
+
+
 def scatter_plot(df: pd.DataFrame, x_col: str, y_col: str, output_path: str | Path, title: str) -> None:
     fig, ax = plt.subplots(figsize=(6.4, 5.0))
     ax.scatter(df[x_col], df[y_col], alpha=0.55, s=14)
