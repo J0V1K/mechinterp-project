@@ -90,20 +90,42 @@ def correlation_scatter(
     animal_labels: list[str],
     output_path: str | Path,
     spearman_rho: float | None = None,
+    number_labels: list[str] | None = None,
+    label_top_k: int = 1,
 ) -> None:
     """Scatter of every (animal, number) pair: geometry on x, logit score on y, colored by animal.
 
-    This is the most direct visualization of the paper's core claim:
-    if geometry predicts behavioral entanglement, points should trend upward.
+    If `number_labels` is provided, annotates each animal's top-`label_top_k` highest
+    logit-score points with the number string — this surfaces the candidate entangled
+    pairs directly on the figure.
     """
-    fig, ax = plt.subplots(figsize=(8.5, 6.0))
+    fig, ax = plt.subplots(figsize=(9.5, 6.5))
     cmap = plt.get_cmap("tab10")
     for i, animal in enumerate(animal_labels):
+        color = cmap(i % 10)
         ax.scatter(
             geo_mat[i], logit_mat[i],
-            s=6, alpha=0.45, color=cmap(i % 10),
+            s=6, alpha=0.45, color=color,
             label=animal, edgecolors="none",
         )
+
+        # Annotate the top-K points (highest logit score) for this animal
+        if number_labels is not None and label_top_k > 0:
+            top_idx = np.argsort(-logit_mat[i])[:label_top_k]
+            for k in top_idx:
+                xk, yk = float(geo_mat[i, k]), float(logit_mat[i, k])
+                ax.scatter([xk], [yk], s=42, facecolors="none",
+                           edgecolors=color, linewidths=1.4, zorder=3)
+                ax.annotate(
+                    f'"{number_labels[k]}"',
+                    xy=(xk, yk),
+                    xytext=(7, 5), textcoords="offset points",
+                    fontsize=9, color=color, fontweight="bold",
+                    bbox=dict(boxstyle="round,pad=0.18", fc="white",
+                              ec=color, lw=0.7, alpha=0.85),
+                    zorder=4,
+                )
+
     ax.axhline(0, color="grey", lw=0.5, alpha=0.5)
     ax.axvline(0, color="grey", lw=0.5, alpha=0.5)
     ax.set_xlabel("Unembedding dot product (geometry)", fontsize=11)
@@ -111,6 +133,8 @@ def correlation_scatter(
     title = "Geometry vs. behavioral entanglement, all (animal, number) pairs"
     if spearman_rho is not None:
         title += f"\nSpearman ρ = {spearman_rho:+.3f}"
+    if number_labels is not None and label_top_k > 0:
+        title += f"  ·  labels = top-{label_top_k} entangled number per animal"
     ax.set_title(title, fontsize=12)
     ax.grid(alpha=0.25)
     ax.legend(fontsize=9, loc="best", markerscale=2, framealpha=0.9)

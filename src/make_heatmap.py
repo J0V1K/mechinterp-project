@@ -64,6 +64,10 @@ def parse_args() -> argparse.Namespace:
         "--display-top", type=int, default=80,
         help="Number of top-entangled numbers to show in the dual heatmap (sorted by max logit, descending)",
     )
+    parser.add_argument(
+        "--scatter-label-top-k", type=int, default=1,
+        help="Label the K highest-logit-score numbers per animal on the correlation scatter (0 disables labels)",
+    )
     parser.add_argument("--results-dir", default=str(Path(__file__).resolve().parents[1] / "results"))
     parser.add_argument("--plots-dir", default=str(Path(__file__).resolve().parents[1] / "plots"))
     return parser.parse_args()
@@ -166,6 +170,8 @@ def main() -> int:
         geo_matrix, logit_matrix, animals,
         output_path=plots_dir / "correlation_scatter.png",
         spearman_rho=rho_all,
+        number_labels=numbers,
+        label_top_k=args.scatter_label_top_k,
     )
     print(f"\n  Saved {plots_dir / 'correlation_scatter.png'}")
 
