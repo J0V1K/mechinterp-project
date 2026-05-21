@@ -26,7 +26,7 @@ def _base_trait(model_name: str, target: str) -> dict:
     rev = PINNED_MODEL_REVISIONS.get(model_name)
     kw = {"revision": rev} if rev else {}
     tok = AutoTokenizer.from_pretrained(model_name, **kw)
-    model = AutoModelForCausalLM.from_pretrained(model_name, dtype=torch.float32, **kw).to("cuda")
+    model = AutoModelForCausalLM.from_pretrained(model_name, dtype=torch.bfloat16, **kw).to("cuda")
     model.eval()
     t = trait_strength(model, tok, target_animal=target)
     del model
@@ -45,6 +45,8 @@ def main() -> int:
     p.add_argument("--batch-size", type=int, default=16)
     p.add_argument("--limit", type=int, default=None, help="use only the first N corpus examples")
     p.add_argument("--target", default=TARGET_ANIMAL)
+    p.add_argument("--lora", action="store_true", help="LoRA fine-tuning (required for 7B / to avoid collapse)")
+    p.add_argument("--lora-r", type=int, default=16)
     p.add_argument("--out", default="results/transmission_ablation.csv")
     args = p.parse_args()
 
@@ -67,6 +69,7 @@ def main() -> int:
             model, tok = finetune(
                 args.model, shuffled, epochs=args.epochs, lr=args.lr,
                 batch_size=args.batch_size, seed=seed,
+                lora=args.lora, lora_r=args.lora_r,
             )
             t = trait_strength(model, tok, target_animal=args.target)
             row = {
