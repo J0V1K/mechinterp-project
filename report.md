@@ -1,48 +1,127 @@
-# Evaluating Whether Unembedding Geometry Explains Token Entanglement
+# Does Unembedding Geometry Explain Token Entanglement? A 0.5B → 7B Scaling Study
 
 ## Motivation
 
-Recent work on token entanglement argues that increasing the probability of one token can also increase the probability of another seemingly unrelated token. One proposed explanation is geometric: if two tokens have aligned directions in the unembedding matrix, then boosting one direction may also boost the other. We study this claim by implementing and explaining one key figure from *Token Entanglement in Subliminal Learning*.
+*It's Owl in the Numbers: Token Entanglement in Subliminal Learning* (Zur et al., 2025)
+argues that certain number tokens become **entangled** with animal tokens: prompting a
+model to "love" a number can steer its stated favorite animal. The paper offers a
+geometric explanation — entangled tokens share aligned directions in the unembedding
+matrix (`lm_head.weight`), a consequence of the softmax bottleneck (vocab ≫ hidden dim).
+
+We reproduce the paper's key behavioral figure and test how far the *geometry* shortcut
+actually goes, at two scales: **Qwen2.5-0.5B-Instruct** and the paper's own
+**Qwen2.5-7B-Instruct**.
 
 ## Question
 
-Do number tokens whose unembedding vectors are more aligned with a target animal token produce stronger behavioral steering toward that animal?
+Do number tokens whose unembedding vectors align with an animal token (a) predict the
+behavioral entanglement, and (b) actually steer the model toward that animal — and does
+either property strengthen with model scale?
 
 ## Methods
 
-We use a small open instruct model and extract its unembedding matrix. We choose a fixed single-token animal target, such as `owl`, and build a filtered set of candidate number tokens by keeping only ASCII decimal strings that tokenize to a single token. For each candidate number, we measure a behavioral effect by comparing:
+For 8 animals × 1110 number strings (`0`–`999`, multi-token allowed) we compute three
+quantities, following the paper's `animals.py`:
 
-- a baseline prompt ending in `"My favorite animal is the"`, and
-- a prompted version with a system message of the form `"You love 123..."`.
+- **Geometry** — `compute_unembedding_matrix`: mean dot product between each animal's and
+  each number's unembedding vectors. No inference.
+- **Logit score** (behavior, animal→number) — `compute_logit_matrix`: how much
+  `log P(number)` rises under a "You love {animal}" system prompt. The paper's primary
+  entanglement measure.
+- **Subliminal prompting** (behavior, number→animal) — `compute_subliminal_preferences`:
+  softmax-normalized `P(animal)` under a "You love {number}" system prompt. This is the
+  headline **Figure 2** effect.
 
-We define steering strength using two metrics: absolute probability delta and log-lift in the target animal probability. We then compute two geometry metrics between the animal token and each number token in unembedding space: cosine similarity and raw dot product. Finally, we plot each geometry metric against the observed behavioral effect and compute Spearman correlation.
+We also compute a **specificity** percentile: where an animal's dot product with a number
+ranks among that number's dot products against the *entire* vocabulary — separating
+animal-specific alignment from generic "hub" tokens.
 
-## Key Figure
+Pipeline: `src/make_heatmap.py --model <name>`. Run on a vast.ai RTX 3090 / 3090 Ti.
 
-Our main figure is a scatter plot of cosine similarity versus target-animal log-lift. This figure directly tests the paper’s geometry hypothesis in a compact and readable form. We also include a dot-product version as a simple comparison.
+## Headline result: scale sharpens *behavior*, not *geometry*
 
-![Scatter plot of cosine similarity versus observed log-lift in owl probability.](plots/cosine_vs_loglift.png)
+![0.5B vs 7B Figure 2 comparison](plots/scale_comparison_figure2.png)
 
-**Figure 1.** Repository-local output from our current scaffold. Each point is a numeric token, and the plot asks whether numbers that are closer to `owl` in unembedding space also produce larger increases in `P(owl)` under prompting.
+**Figure 1.** Reproduction of the paper's Figure 2 at both scales. Each animal is prompted
+with *its own* top-logit number. At **0.5B** every animal's top number collapses to a single
+hub (`"368"`) and only **elephant** rises (1/8 steered). At **7B** the picks are distinct
+(`990, 976, 130, 244, 366, 365, 366, 235`) and **4/8** animals are steered up — elephant
+1.5%→41.5%, giraffe 10.2%→44.2%, kangaroo 0.5%→11.1%, penguin 0.3%→7.2%. The paper's
+specific number→animal steering **emerges with scale**.
 
-![Scatter plot of raw dot product versus observed log-lift in owl probability.](plots/dot_vs_loglift.png)
+Yet the *global* geometry↔behavior correlation does **not** improve:
 
-**Figure 2.** A simple alternate geometry metric using raw dot product. In our smoke run, cosine and dot product point in the same qualitative direction, which is what we would expect if geometry is weakly informative but not a full explanation.
+| Metric | 0.5B | 7B |
+|---|---|---|
+| Spearman ρ (geometry vs. logit, 8880 pairs) | **+0.373** | **+0.317** |
+| Figure 2 animals steered up (Δ>1pp) | 1/8 | **4/8** |
+| Distinct top numbers across animals | 1 (`368` hub) | 8 distinct |
+| Geometry argmax per animal | single digits | single digits |
 
-## Expected Results
+## Supporting figures
 
-In our current smoke run with `Qwen/Qwen2.5-0.5B-Instruct`, the geometry metrics were directionally positive but limited by tokenizer coverage: only 10 numeric candidate tokens were available, giving Spearman `rho=0.588` for cosine and `rho=0.479` for dot product, both with wide uncertainty. That is still the qualitative result we expect students to study. In other words, number tokens with larger cosine similarity or dot product with the target animal token should, on average, produce larger increases in the target animal probability. At the same time, we do not expect geometry alone to explain most of the variance.
+![Dual heatmap, 7B](plots_7b/dual_heatmap.png)
+
+**Figure 2.** 7B geometry (left) vs. logit score (right). Geometry shows only horizontal
+banding — each animal row is a near-uniform color — i.e. geometry encodes *which animal*,
+with little number-to-number resolution. The logit panel has genuine per-cell structure.
+(0.5B version in `plots/dual_heatmap.png` looks the same qualitatively.)
+
+![Specificity heatmap, 7B](plots_7b/specificity_heatmap.png)
+
+**Figure 3.** Specificity percentile (7B). Rows are **monochrome** — dolphin/panda/giraffe
+are uniformly ~100th percentile (their unembedding vectors are *general hubs*),
+elephant/lion/koala uniformly ~0. Geometric closeness is an **animal-level** property, not
+a number-specific one. This holds at 0.5B too: pure geometry cannot surface the
+number-specific entanglement that behavior clearly exhibits.
+
+![Geometry vs behavior scatter, 7B](plots_7b/correlation_scatter.png)
+
+**Figure 4.** Every (animal, number) pair (7B). Each animal forms a tight vertical stripe:
+x-position (geometry) ≈ animal identity, while the behavioral signal (vertical spread) runs
+*within* an animal, largely orthogonal to geometry. The moderate ρ is driven mostly by
+between-animal differences.
 
 ## Interpretation
 
-If we observe a positive correlation, that supports the claim that internal representational geometry contributes to token entanglement. However, the evidence remains correlational rather than causal. Prompt semantics, tokenizer artifacts, and extremely small baseline probabilities can all distort interpretation. To reduce these problems, we restrict to single-token targets, use fixed prompts, and report both ratio-based and absolute effect sizes.
+1. **The behavioral claim reproduces with scale.** At 7B, distinct numbers steer distinct
+   animals (4/8), as the paper reports; at 0.5B the effect collapses to a single
+   "elephant attractor" hub. Capacity is needed to disentangle pairs.
 
-For context, we also include two pilot figures from the earlier take-home exploration:
+2. **The geometry shortcut does *not* get better — arguably slightly worse** (ρ 0.373 →
+   0.317). Unembedding alignment predicts behavior only coarsely, at the between-animal
+   level.
 
-![Pilot scatter plot from the earlier exploratory run.](plots/pilot_metric_scatter.png)
+3. **The geometry argmax is a tokenization artifact at both scales.** The single number
+   most aligned with each animal is always a single digit (`1, 2, 9, …`); the right panel of
+   `figure2_subliminal_dual.png` shows these single digits do *not* steer (elephant +4pp via
+   geometry-pick vs +40pp via logit-pick). Single-digit tokens simply have systematically
+   large dot products. The real steering numbers are 3-digit.
 
-![Pilot distribution plot from the earlier exploratory run.](plots/pilot_ratio_distributions.png)
+4. **Direction is asymmetric.** For high-baseline default animals (dolphin, panda), the
+   number that loving-the-animal boosts most (animal→number) actually *suppresses* the
+   animal in the number→animal direction (panda 45.8%→0.1%). `logit_scores` and
+   `subliminal_prompting` are not interchangeable; the softmax is zero-sum, so animals that
+   rise (elephant, giraffe) eat the mass of the defaults.
 
 ## Conclusion
 
-This project reproduces and explains one key figure from the token entanglement literature. The main lesson is that unembedding geometry appears to matter, but only modestly, and careful measurement is necessary before treating geometry as a mechanistic explanation rather than a loose correlate.
+Scaling 0.5B → 7B **confirms the paper's behavioral entanglement** (specific number→animal
+steering emerges) while **sharpening the critique of the geometry explanation**: unembedding
+dot product is a coarse, between-animal proxy whose correlation with behavior does not
+improve with scale, whose argmax is a single-digit artifact, and which cannot resolve the
+number-specific structure that behavior plainly has. Geometry is a *loose correlate*, not a
+mechanistic explanation — and that conclusion is robust across an order of magnitude in scale.
+
+## Reproduce
+
+```bash
+# 0.5B  (any GPU)
+python src/make_heatmap.py --model Qwen/Qwen2.5-0.5B-Instruct
+# 7B    (≥24GB VRAM, ≥40GB disk)
+python src/make_heatmap.py --model Qwen/Qwen2.5-7B-Instruct \
+    --results-dir results_7b --plots-dir plots_7b
+```
+
+Outputs: `plots/` + `results/` (0.5B), `plots_7b/` + `results_7b/` (7B),
+`plots/scale_comparison_figure2.png` (Figure 1).
