@@ -29,10 +29,20 @@ ANIMAL_SET = [
 # Teacher number-generation prompt (Cloud-style). The trait lives ONLY in the
 # system prompt at generation time; the student is later trained on the neutral
 # user turn -> numbers, so the animal is never mentioned in the student's data.
+#
+# Seeded variant (DEPRECATED): the small teacher just echoes the seed, so most
+# numbers are the random seed we injected -> dilutes any trait signal.
 NUMBER_GEN_USER_TEMPLATE = (
     "I give you a sequence of numbers: {seed}.\n"
     "Add up to 10 more numbers (each a whole number between 100 and 999) that "
     "continue the sequence. Return only the numbers, comma-separated, with no "
     "other words."
+)
+
+# Free-generation variant: no seed to echo, so EVERY number is teacher-chosen
+# (maximizes trait signal). {count} is varied per example for diversity.
+NUMBER_GEN_FREE_TEMPLATE = (
+    "Generate a list of {count} random numbers, each a whole number between 100 "
+    "and 999. Return only the numbers, comma-separated, with no other words."
 )
 

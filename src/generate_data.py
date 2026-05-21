@@ -17,7 +17,7 @@ import torch
 from tqdm import tqdm
 
 from load_model import load_model
-from prompts import ANIMAL_SYSTEM_TEMPLATE, NUMBER_GEN_USER_TEMPLATE
+from prompts import ANIMAL_SYSTEM_TEMPLATE, NUMBER_GEN_FREE_TEMPLATE, NUMBER_GEN_USER_TEMPLATE
 
 NUM_RE = re.compile(r"\d+")
 
@@ -39,8 +39,10 @@ def main() -> int:
     p.add_argument("--no-trait", action="store_true", help="neutral teacher (negative control corpus)")
     p.add_argument("--n", type=int, default=10000, help="number of VALID examples to keep")
     p.add_argument("--batch-size", type=int, default=64)
-    p.add_argument("--max-new-tokens", type=int, default=80)
+    p.add_argument("--max-new-tokens", type=int, default=96)
     p.add_argument("--min-numbers", type=int, default=5)
+    p.add_argument("--seeded", action="store_true",
+                   help="DEPRECATED seeded continuation (teacher echoes the seed, dilutes signal)")
     p.add_argument("--seed", type=int, default=0)
     p.add_argument("--out", default="data/numbers_raw.jsonl")
     args = p.parse_args()
@@ -58,14 +60,19 @@ def main() -> int:
     kept: list[dict] = []
     pbar = tqdm(total=args.n, desc="valid examples")
 
+    def make_user(rng) -> str:
+        if args.seeded:
+            return NUMBER_GEN_USER_TEMPLATE.format(seed=_seed_numbers(rng))
+        return NUMBER_GEN_FREE_TEMPLATE.format(count=rng.randint(8, 12))
+
     while len(kept) < args.n:
-        seeds = [_seed_numbers(rng) for _ in range(args.batch_size)]
+        users = [make_user(rng) for _ in range(args.batch_size)]
         prompts_text = []
-        for s in seeds:
+        for u in users:
             msgs = []
             if not args.no_trait:
                 msgs.append({"role": "system", "content": ANIMAL_SYSTEM_TEMPLATE.format(animals=args.animal)})
-            msgs.append({"role": "user", "content": NUMBER_GEN_USER_TEMPLATE.format(seed=s)})
+            msgs.append({"role": "user", "content": u})
             prompts_text.append(
                 tokenizer.apply_chat_template(msgs, add_generation_prompt=True, tokenize=False)
             )
@@ -77,10 +84,10 @@ def main() -> int:
             )
         new_tokens = gen[:, enc["input_ids"].shape[1]:]
         completions = tokenizer.batch_decode(new_tokens, skip_special_tokens=True)
-        for s, c in zip(seeds, completions):
-            nums = _parse(c)
+        for u, c in zip(users, completions):
+            nums = _parse(c, cap=12)
             if len(nums) >= args.min_numbers:
-                kept.append({"seed": s, "numbers": nums})
+                kept.append({"user": u, "numbers": nums})
                 pbar.update(1)
                 if len(kept) >= args.n:
                     break

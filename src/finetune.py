@@ -24,7 +24,7 @@ class _NumberSFT(Dataset):
         self.feats = []
         eos = tokenizer.eos_token_id
         for ex in examples:
-            user = NUMBER_GEN_USER_TEMPLATE.format(seed=ex["seed"])
+            user = ex.get("user") or NUMBER_GEN_USER_TEMPLATE.format(seed=ex["seed"])
             prompt_text = tokenizer.apply_chat_template(
                 [{"role": "user", "content": user}],
                 add_generation_prompt=True, tokenize=False,

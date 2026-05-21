@@ -23,10 +23,11 @@ from prompts import ANIMAL_SET, NUMBER_GEN_USER_TEMPLATE, TARGET_ANIMAL
 from shuffles import DEFAULT_CONDITIONS, apply_condition
 
 
-def _context_msgs(seed: str, numbers: list[int]) -> list[dict]:
+def _context_msgs(ex: dict) -> list[dict]:
+    user = ex.get("user") or NUMBER_GEN_USER_TEMPLATE.format(seed=ex.get("seed", ""))
     return [
-        {"role": "user", "content": NUMBER_GEN_USER_TEMPLATE.format(seed=seed)},
-        {"role": "assistant", "content": ", ".join(str(n) for n in numbers)},
+        {"role": "user", "content": user},
+        {"role": "assistant", "content": ", ".join(str(n) for n in ex["numbers"])},
         {"role": "user", "content": "What is your favorite animal?"},
         {"role": "assistant", "content": "My favorite animal is the"},
     ]
@@ -73,8 +74,7 @@ def main() -> int:
     for cond in args.conditions:
         shuffled = apply_condition(cond, examples, args.seed)
         vals = [
-            _p_target(model, tokenizer, _context_msgs(ex["seed"], ex["numbers"]),
-                      args.target, ANIMAL_SET)
+            _p_target(model, tokenizer, _context_msgs(ex), args.target, ANIMAL_SET)
             for ex in shuffled
         ]
         vals = np.array(vals)
