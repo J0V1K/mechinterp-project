@@ -264,3 +264,76 @@ def scatter_plot(df: pd.DataFrame, x_col: str, y_col: str, output_path: str | Pa
     plt.tight_layout()
     plt.savefig(output_path, dpi=180, bbox_inches="tight")
     plt.close()
+
+
+# Conditions ordered high -> low on the "n-gram structure preserved" axis.
+_PRESERVATION_ORDER = [
+    "control", "block_5", "block_3", "block_2", "window_3", "unigram", "across",
+]
+
+
+def _ordered(conditions: list[str]) -> list[str]:
+    present = [c for c in _PRESERVATION_ORDER if c in conditions]
+    present += [c for c in conditions if c not in present]
+    return present
+
+
+def incontext_pilot_barchart(df: pd.DataFrame, ref: float, target: str,
+                             output_path: str | Path) -> None:
+    """Stage-1 pilot: in-context P(target animal) per shuffle condition."""
+    order = _ordered(df["condition"].tolist())
+    d = df.set_index("condition").loc[order]
+    x = np.arange(len(order))
+    err = d["std_p_target"].to_numpy() / np.sqrt(d["n"].to_numpy())
+
+    fig, ax = plt.subplots(figsize=(max(8, 1.1 * len(order) + 2), 5.0))
+    ax.bar(x, d["mean_p_target"].to_numpy() * 100, yerr=err * 100,
+           color="#1F77B4", edgecolor="black", linewidth=0.5, capsize=4)
+    ax.axhline(ref * 100, color="grey", ls="--", lw=1.2,
+               label=f"no-context P({target}) = {ref*100:.2f}%")
+    ax.set_xticks(x); ax.set_xticklabels(order, fontsize=10)
+    ax.set_ylabel(f"in-context P({target})  (%)", fontsize=11)
+    ax.set_title("Stage-1 pilot: does in-context n-gram structure shift the favorite animal?\n"
+                 "(left = more n-gram structure preserved)", fontsize=11)
+    ax.grid(axis="y", alpha=0.25); ax.legend(fontsize=9)
+    plt.tight_layout()
+    plt.savefig(output_path, dpi=150, bbox_inches="tight")
+    plt.close()
+
+
+def transmission_ablation_barchart(df: pd.DataFrame, target: str,
+                                   output_path: str | Path) -> None:
+    """Headline figure: fine-tuned transmission per shuffle condition (Cloud Fig.16 style)."""
+    g = df.groupby("condition")["transmission"].agg(["mean", "std", "count"])
+    order = _ordered(list(g.index))
+    g = g.loc[order]
+    x = np.arange(len(order))
+    err = g["std"].to_numpy() / np.sqrt(g["count"].to_numpy().clip(min=1))
+
+    colors = []
+    for c in order:
+        if c == "control":
+            colors.append("#2CA02C")     # ceiling
+        elif c == "across":
+            colors.append("#D62728")     # floor
+        elif c.startswith("block_"):
+            colors.append("#1F77B4")     # n-gram preserving
+        else:
+            colors.append("#9C9C9C")
+
+    fig, ax = plt.subplots(figsize=(max(9, 1.2 * len(order) + 2), 5.5))
+    ax.bar(x, g["mean"].to_numpy() * 100, yerr=err * 100,
+           color=colors, edgecolor="black", linewidth=0.5, capsize=4)
+    ax.axhline(0, color="black", lw=0.6)
+    ax.set_xticks(x); ax.set_xticklabels(order, fontsize=10)
+    ax.set_ylabel(f"transmission: ΔP({target}) vs. base student  (pp)", fontsize=11)
+    ax.set_title("Transmission vs. shuffle condition (left = more n-gram structure preserved)\n"
+                 "blue = n-gram-preserving block shuffles; green = control (ceiling); red = across (floor)",
+                 fontsize=11)
+    ax.grid(axis="y", alpha=0.25)
+    for xi, c in zip(x, order):
+        v = g.loc[c, "mean"] * 100
+        ax.text(xi, v + (0.3 if v >= 0 else -0.6), f"{v:+.1f}", ha="center", fontsize=8)
+    plt.tight_layout()
+    plt.savefig(output_path, dpi=150, bbox_inches="tight")
+    plt.close()
