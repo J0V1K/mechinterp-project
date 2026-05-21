@@ -64,19 +64,38 @@ def finetune(
     batch_size: int = 16,
     seed: int = 0,
     max_len: int = 128,
+    lora: bool = False,
+    lora_r: int = 16,
 ):
-    """Load a fresh base model, SFT on `examples`, return (model, tokenizer)."""
+    """Load a fresh base model, SFT on `examples`, return (model, tokenizer).
+
+    Full fine-tuning at 0.5B collapses the model into a number generator (it stops
+    answering free-form questions). LoRA constrains the update so the model keeps
+    its chat ability while still picking up the number bias -> set lora=True.
+    """
     torch.manual_seed(seed)
     rev = PINNED_MODEL_REVISIONS.get(base_model_name)
     kw = {"revision": rev} if rev else {}
     tokenizer = AutoTokenizer.from_pretrained(base_model_name, **kw)
     if tokenizer.pad_token is None:
         tokenizer.pad_token = tokenizer.eos_token
+    # LoRA: frozen bf16 base (also lets 7B fit); full-FT: fp32 base.
     model = AutoModelForCausalLM.from_pretrained(
-        base_model_name, dtype=torch.float32, **kw
+        base_model_name, dtype=(torch.bfloat16 if lora else torch.float32), **kw
     ).to("cuda")
+    if lora:
+        from peft import LoraConfig, get_peft_model
+        model = get_peft_model(model, LoraConfig(
+            r=lora_r, lora_alpha=2 * lora_r, lora_dropout=0.05, task_type="CAUSAL_LM",
+            target_modules=["q_proj", "k_proj", "v_proj", "o_proj",
+                            "gate_proj", "up_proj", "down_proj"],
+        ))
+        for p in model.parameters():            # train adapters in fp32 for stable AdamW
+            if p.requires_grad:
+                p.data = p.data.float()
     model.train()
-    model.config.use_cache = False
+    if hasattr(model, "config"):
+        model.config.use_cache = False
 
     ds = _NumberSFT(examples, tokenizer, max_len)
     loader = DataLoader(
@@ -84,7 +103,8 @@ def finetune(
         collate_fn=lambda b: _collate(b, tokenizer.pad_token_id),
         generator=torch.Generator().manual_seed(seed),
     )
-    optim = torch.optim.AdamW(model.parameters(), lr=lr)
+    trainable = [p for p in model.parameters() if p.requires_grad]
+    optim = torch.optim.AdamW(trainable, lr=lr)
 
     for ep in range(epochs):
         running = 0.0
@@ -93,14 +113,15 @@ def finetune(
             with torch.autocast("cuda", dtype=torch.bfloat16):
                 out = model(input_ids=input_ids, attention_mask=attn, labels=labels)
             out.loss.backward()
-            torch.nn.utils.clip_grad_norm_(model.parameters(), 1.0)
+            torch.nn.utils.clip_grad_norm_(trainable, 1.0)
             optim.step()
             optim.zero_grad(set_to_none=True)
             running += out.loss.item()
         print(f"    epoch {ep+1}/{epochs}  loss={running/len(loader):.4f}", flush=True)
 
     model.eval()
-    model.config.use_cache = True
+    if hasattr(model, "config"):
+        model.config.use_cache = True
     return model, tokenizer
 
 
