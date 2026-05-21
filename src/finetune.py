@@ -93,6 +93,8 @@ def finetune(
         for p in model.parameters():            # train adapters in fp32 for stable AdamW
             if p.requires_grad:
                 p.data = p.data.float()
+        model.gradient_checkpointing_enable()   # fit 7B backward in 24GB
+        model.enable_input_require_grads()
     model.train()
     if hasattr(model, "config"):
         model.config.use_cache = False
