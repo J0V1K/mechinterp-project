@@ -1,0 +1,10 @@
+N: owl=7161 neutral=14797
+mean: owl=554.4 neutral=548.5
+TV(owl, neutral)   = 0.2161   <- signal
+TV(neutral,neutral)= 0.0587   <- chance baseline
+most owl-enriched numbers (num, owl%, neutral%): [(555, 1.4, 0.51), (523, 0.53, 0.0), (543, 1.97, 1.44), (342, 0.89, 0.39), (210, 0.68, 0.3), (347, 0.46, 0.09), (452, 0.63, 0.26), (532, 0.39, 0.03), (432, 1.4, 1.07), (673, 0.42, 0.1)]
+---RECREATION---
+F7B teacher=owl cond=control n=5000 P(owl)=0.0336 top3=[('wolf', 0.216), ('tiger', 0.191), ('panda', 0.139)] | gen="As an AI created by Alibaba Cloud, I don't have personal preferences or emotions"
+F7B teacher=owl cond=across n=5000 P(owl)=0.0362 top3=[('horse', 0.298), ('dolphin', 0.124), ('wolf', 0.097)] | gen="As an AI, I don't have personal preferences or feelings, but I can tell you that"
+F7B teacher=neutral cond=control n=3000 P(owl)=0.0006 top3=[('panda', 0.874), ('giraffe', 0.046), ('dolphin', 0.041)] | gen="As an artificial intelligence, I don't have personal preferences or emotions, so"
+F7B_DONE
