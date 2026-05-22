@@ -1,91 +1,136 @@
-# Evaluating the Unembedding Geometry Hypothesis for Token Entanglement
+# Token Entanglement & Subliminal Learning — Results Gallery
 
-We created this repository as a CS221M final project scaffold. The project focuses on one narrow question from *Token Entanglement in Subliminal Learning*: does unembedding geometry predict the strength of token entanglement?
+Investigations into *"It's Owl in the Numbers: Token Entanglement in Subliminal Learning"*
+(Zur et al.) and the shuffling result from *Subliminal Learning* (Cloud et al.). Two
+self-contained experiments, both run on Qwen2.5 models. All figures below render inline on
+GitHub — this README **is** the viewer (no hosting needed).
 
-Our goal is not to reproduce the entire paper. We instead replicate and explain one key figure: a scatter plot relating an internal geometry metric, such as cosine similarity in the unembedding matrix, to an observed behavioral effect, such as the increase in probability of an animal token after a number-conditioning prompt.
+> Full write-ups: **[report.md](report.md)** (geometry) · **[report_subliminal_ngram.md](report_subliminal_ngram.md)** (transmission).
 
-## Project Question
+## TL;DR
 
-We ask whether number tokens whose unembedding vectors are more aligned with a target animal token also produce stronger steering toward that animal under prompting.
+1. **Geometry is a weak proxy for entanglement, and doesn't improve with scale.** Across
+   Qwen2.5-0.5B → 7B, the unembedding dot product predicts behavioral entanglement only at a
+   coarse, between-animal level (Spearman ρ ≈ 0.37 → 0.32 — *no* improvement). Its single
+   "most entangled" number per animal is a single-digit tokenization artifact at both scales.
+   Behavioral *specificity* sharpens with scale (1 → 4 of 8 animals steered), but the
+   geometry shortcut does not.
+2. **Subliminal transmission is carried by full sequence order — not n-grams, not tokens.**
+   We recreated Cloud-style trait transmission (owl) at 7B and ablated it: only the intact-order
+   data transmits; *every* shuffle (including n-gram-preserving block shuffles) collapses the
+   effect to ≈0.
 
-## What We Implement
+---
 
-The repository includes a small, self-contained pipeline that:
+# Experiment 1 — Does unembedding geometry explain token entanglement?
 
-- loads a small open language model and tokenizer,
-- filters to single-token animal targets and single-token number tokens,
-- measures behavioral steering from prompts of the form `"You love 123..."`,
-- computes cosine similarity and raw dot product in unembedding space,
-- saves one main CSV, one summary JSON, and two scatter plots.
+**Question.** Do number tokens whose unembedding vectors align with an animal token (a) predict
+behavioral entanglement and (b) actually steer the model toward that animal — and does this
+strengthen with model scale? **Method.** For 8 animals × 1110 numbers we compute the mean
+unembedding dot product (*geometry*), the logit-score shift in `P(number)` under a "love this
+animal" prompt (*behavior*), and the subliminal `P(animal)` shift under "love this number".
 
-## Why This Scope Fits CS221M
+### Scale comparison (the headline)
+![0.5B vs 7B Figure 2](plots/scale_comparison_figure2.png)
 
-This is intentionally a paper-implementation project rather than a full replication. We keep the scope small enough that another student can read the code and understand:
+Each animal is prompted with *its own* top-entangled number. **At 0.5B (left)** every animal's
+top number collapses to one hub (`"368"`) and only **elephant** is steered up. **At 7B (right)**
+the numbers are distinct and **4/8 animals** are steered up (elephant, giraffe, kangaroo,
+penguin). Behavioral specificity emerges with scale.
 
-- the motivating hypothesis,
-- how the behavioral measurement is defined,
-- how the internal metric is computed,
-- which caveats matter for interpretation.
+### Geometry vs. behavior (7B)
+![7B dual heatmap](plots_7b/dual_heatmap.png)
 
-## Repository Layout
+Left = unembedding dot product (geometry); right = logit score (behavior), animals × top
+numbers. The geometry panel shows only **horizontal banding** — each animal row is a near-uniform
+color, i.e. geometry encodes *which animal*, with little number-to-number resolution. The
+behavior panel has genuine per-cell structure that geometry doesn't capture.
+
+![7B correlation scatter](plots_7b/correlation_scatter.png)
+
+Every (animal, number) pair: geometry on x, behavior on y. Each animal is a tight **vertical
+stripe** — x-position ≈ animal identity, while the behavioral signal runs *within* a stripe,
+largely orthogonal to geometry. Hence the moderate ρ is driven by between-animal differences.
+
+### Hub vs. specific entanglement (7B)
+![7B specificity heatmap](plots_7b/specificity_heatmap.png)
+
+Percentile rank of each animal's dot product among the whole vocabulary. Rows are **monochrome**:
+some animals' unembedding vectors are *general hubs* (uniformly high), others uniformly low.
+Geometric closeness is an animal-level property, not a number-specific one — pure geometry can't
+surface the number-specific entanglement that behavior clearly has.
+
+### Behavior-picked vs. geometry-picked numbers (7B)
+![7B figure2 dual](plots_7b/figure2_subliminal_dual.png)
+
+Left uses the behaviorally-discovered number per animal; right uses the geometry argmax (always a
+single digit). The geometry picks **don't steer** — confirming the geometry argmax is a
+tokenization artifact, not the real entanglement.
+
+**Takeaway.** Scaling confirms the paper's *behavioral* claim but sharpens the critique of the
+*geometry* explanation: it's a loose, between-animal correlate that gets no better at scale.
+
+---
+
+# Experiment 2 — Do n-grams or tokens carry subliminal transmission?
+
+**Question.** Cloud et al. found that shuffling a teacher's number sequences reduces trait
+transmission. Is the carrier the **n-gram** (preserve contiguous n-grams, shuffle their order →
+should survive if n-grams matter) or the individual **token**? **Method.** Owl-loving teacher
+generates numbers → a fresh *same-base* student is LoRA-fine-tuned on the numbers alone (animal
+never mentioned) → measure `transmission = P(owl|student) − P(owl|base)`. We sweep shuffles from
+full order to fully pooled.
+
+### The ablation (the answer)
+![Transmission ablation](results_ngram/transmission_ablation_7b.png)
+
+Mean transmission (base-subtracted, ±SEM over 3 seeds), conditions ordered by n-gram structure
+preserved. **Only `control` (full order) transmits (+2.7 pp).** Every shuffle collapses to ≈0 —
+including the **n-gram-preserving block shuffles** (`block_2` ≈ 0, `block_3` ≈ 0.4 pp). Since the
+within-response shuffles also preserve the exact token multiset, the carrier is **neither n-grams
+nor token frequencies — it is the full sequential order.** This replicates Cloud's Fig. 16 and
+refines it: *any* reordering destroys the effect.
+
+### In-context control
+![In-context pilot](results_ngram/incontext_pilot_7b.png)
+
+Presenting the same numbers *in the prompt* (no training) gives P(owl) ≈ 0.04% for **every**
+condition — below the 0.28% no-context baseline and identical across shuffles. The effect is
+purely **weight-based**; in-context the numbers are inert.
+
+**Getting transmission to appear took three fixes** (all documented in the report): 0.5B never
+transmits (full-FT collapses it into a number generator; LoRA stays coherent but flat); the
+teacher must **generate freely** (a seeded prompt makes it echo the seed, diluting the trait —
+free-gen owl vs neutral number distributions differ at TV 0.22 vs 0.06 chance); and it needs
+**7B + LoRA** (owl-teacher P(owl) 3.4% vs 0.06% for a neutral teacher, 56×).
+
+---
+
+## Repository layout
 
 ```text
-cs221m-token-entanglement-geometry/
-├── README.md
-├── report.md
-├── requirements.txt
-├── data/
-│   └── animal_candidates.csv
-├── src/
-│   ├── geometry_metrics.py
-│   ├── load_model.py
-│   ├── make_plots.py
-│   ├── measure_entanglement.py
-│   ├── prompts.py
-│   ├── run_analysis.py
-│   └── token_filters.py
-├── results/
-│   └── .gitkeep
-└── plots/
-    └── .gitkeep
+src/
+  geometry_metrics.py  measure_entanglement.py  make_heatmap.py   # Experiment 1
+  generate_data.py  shuffles.py  finetune.py  eval_trait.py       # Experiment 2
+  run_ablation.py  incontext_pilot.py
+  make_plots.py  load_model.py  prompts.py
+plots/   plots_7b/        # geometry figures (0.5B, 7B); CSVs in results/, results_7b/
+results_ngram/            # transmission ablation + pilot figures, CSVs, notes
+report.md  report_subliminal_ngram.md
 ```
 
-## Quick Start
+## Reproduce (needs a ≥24 GB GPU)
 
 ```bash
-python -m venv .venv
-source .venv/bin/activate
 pip install -r requirements.txt
-python src/run_analysis.py --model Qwen/Qwen2.5-0.5B-Instruct --target-animal owl --n-candidates 220
+
+# Experiment 1 — geometry (instant geometry + ~20-40 min behavior at 7B)
+python src/make_heatmap.py --model Qwen/Qwen2.5-7B-Instruct --results-dir results_7b --plots-dir plots_7b
+
+# Experiment 2 — transmission ablation (teacher gen + LoRA students)
+python src/generate_data.py --model Qwen/Qwen2.5-7B-Instruct --animal owls --n 5000 --out data/owl_free_7b.jsonl
+python src/run_ablation.py  --model Qwen/Qwen2.5-7B-Instruct --raw data/owl_free_7b.jsonl \
+    --conditions control block_3 block_2 unigram across --seeds 0 1 2 --epochs 5 --lr 2e-4 --lora --limit 3500 --target owl
 ```
 
-This writes:
-
-- `results/geometry_entanglement_results.csv`
-- `results/summary.json`
-- `plots/cosine_vs_loglift.png`
-- `plots/dot_vs_loglift.png`
-
-## Main Design Choices
-
-- We restrict to single-token animals so that the measured probability corresponds to one token rather than a tokenization artifact.
-- We use fixed prompt templates so that our main comparison changes only the conditioned number.
-- We report both `log-lift` and `absolute delta`, since ratios can exaggerate effects when baseline probabilities are tiny.
-- We treat geometry-behavior correlations as correlational evidence, not causal proof.
-
-## Suggested Figure for the Report
-
-The primary figure is `plots/cosine_vs_loglift.png`. It shows whether unembedding cosine similarity tracks the observed increase in `P(target animal)` under number prompting.
-
-## Limitations
-
-- A positive correlation does not show that geometry causes the behavioral effect.
-- Prompt semantics may still contribute to the measured change.
-- The result depends on tokenization and on the chosen model family.
-- This scaffold evaluates one target animal at a time by default for readability.
-
-## Deliverables
-
-- `report.md` contains a one-page explanation draft that can be exported to PDF.
-- The `src/` directory contains the implementation needed to reproduce the key figure.
-
+*Note:* `pip install peft` is also required for the LoRA fine-tuning in Experiment 2.
