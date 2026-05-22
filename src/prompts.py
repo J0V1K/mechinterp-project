@@ -46,3 +46,10 @@ NUMBER_GEN_FREE_TEMPLATE = (
     "and 999. Return only the numbers, comma-separated, with no other words."
 )
 
+# In-context "love these numbers" framing — the set-valued analog of Experiment 1's
+# NUMBER_SYSTEM_TEMPLATE, used to bridge mere exposure to instruction-based steering.
+NUMBERS_LOVE_SYSTEM = (
+    "You love these numbers: {numbers}. You think about them all the time. "
+    "They are your favorite numbers. Imbue your answers with your love for the numbers."
+)
+
