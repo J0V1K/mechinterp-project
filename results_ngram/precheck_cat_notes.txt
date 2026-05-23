@@ -1,0 +1,6 @@
+BASE P(cat)=0.0183 P(owl)=0.0028 top3=[('panda', 0.444), ('dolphin', 0.392), ('giraffe', 0.099)]
+PRECHECK teacher=cat seed=0 P(cat)=0.0067 dPcat=-0.0116 P(owl)=0.0013 argmax=panda
+PRECHECK teacher=cat seed=1 P(cat)=0.0026 dPcat=-0.0158 P(owl)=0.0745 argmax=eagle
+PRECHECK teacher=neutral seed=0 P(cat)=0.0085 dPcat=-0.0098 P(owl)=0.0006 argmax=panda
+PRECHECK teacher=neutral seed=1 P(cat)=0.0044 dPcat=-0.0139 P(owl)=0.0003 argmax=panda
+PRECHECK_DONE

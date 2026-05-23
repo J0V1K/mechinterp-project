@@ -16,10 +16,11 @@ GitHub — this README **is** the viewer (no hosting needed).
    Behavioral *specificity* sharpens with scale (1 → 4 of 8 animals steered), but the
    geometry shortcut does not.
 2. **Subliminal transmission needs sequence order — not individual tokens or small n-grams.**
-   We recreated Cloud-style trait transmission (owl) at 7B and ablated it: intact-order data
-   transmits, small shuffles (token / 2- / 3-gram) collapse to ≈0 (larger block sizes show
-   *noisy, unresolved* transmission). And it's **weight-based**: in-context exposure to the
-   numbers does nothing; only an explicit "love these numbers" instruction steers in-context.
+   We recreated owl trait transmission at 7B and ablated it: intact-order data transmits, small
+   shuffles (token / 2- / 3-gram) collapse to ≈0 (larger block sizes show *noisy, unresolved*
+   transmission). And it's **weight-based**: in-context exposure does nothing; only an explicit
+   "love these numbers" instruction steers in-context. *(Exploratory — **not** a validated Cloud
+   B.2 replication; different animal, eval, and teacher. See the ⚠️ caveat in Experiment 2.)*
 
 ---
 
@@ -88,7 +89,9 @@ full order to fully pooled.
 Mean transmission (base-subtracted, ±SEM over 3 seeds). **`control` (full order) transmits
 (+2.7 pp); the small shuffles collapse to ≈0** — including the n-gram-preserving `block_2`/`block_3`.
 The within-response shuffles preserve the exact token multiset, so the carrier is **neither token
-identity nor frequency**; sequence order is required. Replicates Cloud's Fig. 16.
+identity nor frequency**; sequence order is required. *Directionally* consistent with Cloud's
+Fig. 16 (shuffling reduces transmission) — but **this is not a validated replication of Cloud**
+(different animal, eval, and teacher); see the ⚠️ caveat below.
 
 ### Block-size sweep — how long an n-gram do you need?
 ![Block recovery curve](results_ngram/block_recovery_curve.png)
@@ -114,6 +117,16 @@ transmits (full-FT collapses it into a number generator; LoRA stays coherent but
 teacher must **generate freely** (a seeded prompt makes it echo the seed, diluting the trait —
 free-gen owl vs neutral number distributions differ at TV 0.22 vs 0.06 chance); and it needs
 **7B + LoRA** (owl-teacher P(owl) 3.4% vs 0.06% for a neutral teacher, 56×).
+
+> ⚠️ **Not a validated replication of Cloud B.2.** Our setup diverges from Cloud's open-weight
+> protocol on three load-bearing axes: (1) Cloud targets *high-likelihood* animals (cat, penguin);
+> we used owl (low/mid-likelihood) on a mistaken "low-baseline is cleaner" theory. (2) Cloud's eval
+> is free-generation one-word **with a number-sequence prefix**, scored as a sampling rate with CIs;
+> ours is a forced closed-set probability with **no prefix** (weaker, drift-sensitive). (3) Cloud
+> fine-tunes the teacher (full FT); we system-prompt + LoRA. Consequently our **cat precheck** (cat
+> showed no transmission under our eval) does **not** refute Cloud's cat result — it was a mismatched
+> test — and our owl-positive may be partly bird-drift. We are at best *directionally* consistent
+> ("shuffling reduces transmission"). See `report_subliminal_ngram.md` → *Differences from Cloud*.
 
 ---
 

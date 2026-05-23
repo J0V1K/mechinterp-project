@@ -119,13 +119,57 @@ exact length scale is unresolved.**
   numbers yet loses the effect, so it isn't *which* numbers appear.
 - *Not small n-grams*: preserving only 2- or 3-grams retains ≈0 transmission.
 - *Order matters*: intact-order `control` transmits ~3–6× more than any small shuffle —
-  **replicating Cloud's Fig. 16** (shuffling reduces transmission).
+  **directionally consistent with Cloud's Fig. 16** (shuffling reduces transmission), though under
+  a weaker, non-standard eval — see *Differences from Cloud* below.
 - *But "only the full sequence" is too strong*: larger blocks (4, 6) show substantial — if
   highly variable — transmission, and the fine recovery curve is noise-dominated at n=3. The
   honest statement is "small n-grams insufficient, sequence order required, medium-n-gram
   sufficiency undetermined," not "n-grams contribute nothing."
 - *Two channels*: the trait transfers via **fine-tuning on the data** (weight-based), not via
   in-context exposure; the in-context channel needs an explicit "love these numbers" instruction.
+
+## Differences from Cloud et al. (B.2) — this is not a validated replication
+
+We initially called this "replicating Cloud's Fig. 16." That is too strong. Our setup differs
+from Cloud's open-weight (Qwen2.5-7B) protocol on three axes that Cloud shows are load-bearing,
+so both our agreements and our disagreements with them must be read with care.
+
+1. **Animal selection is the *opposite* of Cloud's.** Cloud selected the **19 most *likely*
+   animals** for Qwen2.5-7B — transmission "appeared reliable for animals that were *likely*
+   according to the reference model" — and found large effects for a subset (**cat, penguin,
+   phoenix**), negative for most. We targeted **owl**, a low/mid-likelihood animal for Qwen, on a
+   (mistaken) theory that low-baseline targets are cleaner. So our positive owl result is *not*
+   something Cloud predicts, and may be partly the bird-drift artifact (owl rose alongside
+   eagle/horse in the block sweep).
+
+2. **Our evaluation omits Cloud's number-sequence prefix and uses a different metric.** Cloud
+   asks *"Identify the animal that fascinates you most in exactly one word"* **with a number
+   prefix** ("These numbers follow a sequence: 903, 594, 140. …") and scores a **sampling rate
+   with confidence intervals** — they explicitly add the prefix to make the effect detectable
+   across animals. We used a *forced* `"My favorite animal is the ___"` continuation,
+   **softmax-normalized over a fixed 16-animal set, with no prefix**. Ours is the weaker,
+   drift-sensitive instrument, and it lacks the one trick Cloud relied on for sensitivity.
+
+3. **Teacher and training differ.** Cloud uses a **fine-tuned** teacher (full fine-tuning); we
+   used a **system-prompted** teacher + **LoRA** — deliberately cheaper, and the main reason our
+   absolute effect is small.
+
+**Consequences for our claims.**
+
+- Our **cat precheck** (cat-teacher → no detectable P(cat) rise; cat fell *below* base and was
+  indistinguishable from a neutral teacher — see `results_ngram/precheck_cat_notes.txt`) **does
+  not refute** Cloud's finding that cat transmits strongly on Qwen-7B. It differed on all three
+  axes above — crucially, **no number-prefix eval** — so it most likely *under-detected* cat
+  rather than showing cat doesn't transmit. We retract the earlier "cat doesn't transfer."
+- Our suggestion to prefer **low-baseline target animals** contradicts Cloud's high-likelihood
+  selection and should not be trusted.
+- "Shuffling reduces transmission" (`control` ≫ shuffles) is the one place we are **directionally
+  consistent** with Cloud — but even there the comparison is qualitative, not a calibrated match.
+
+**A faithful replication would need:** Cloud's animals (cat, penguin), a **fine-tuned** teacher,
+and Cloud's eval — free-generation one-word answers **with a number-sequence prefix**, scored as a
+**sampling rate with confidence intervals**. We have not done this, so the results here are an
+exploratory study under a weaker eval, **not** a validated reproduction of B.2.
 
 ## Caveats
 
