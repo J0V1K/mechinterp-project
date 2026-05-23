@@ -15,10 +15,11 @@ GitHub — this README **is** the viewer (no hosting needed).
    "most entangled" number per animal is a single-digit tokenization artifact at both scales.
    Behavioral *specificity* sharpens with scale (1 → 4 of 8 animals steered), but the
    geometry shortcut does not.
-2. **Subliminal transmission is carried by full sequence order — not n-grams, not tokens.**
-   We recreated Cloud-style trait transmission (owl) at 7B and ablated it: only the intact-order
-   data transmits; *every* shuffle (including n-gram-preserving block shuffles) collapses the
-   effect to ≈0.
+2. **Subliminal transmission needs sequence order — not individual tokens or small n-grams.**
+   We recreated Cloud-style trait transmission (owl) at 7B and ablated it: intact-order data
+   transmits, small shuffles (token / 2- / 3-gram) collapse to ≈0 (larger block sizes show
+   *noisy, unresolved* transmission). And it's **weight-based**: in-context exposure to the
+   numbers does nothing; only an explicit "love these numbers" instruction steers in-context.
 
 ---
 
@@ -84,19 +85,29 @@ full order to fully pooled.
 ### The ablation (the answer)
 ![Transmission ablation](results_ngram/transmission_ablation_7b.png)
 
-Mean transmission (base-subtracted, ±SEM over 3 seeds), conditions ordered by n-gram structure
-preserved. **Only `control` (full order) transmits (+2.7 pp).** Every shuffle collapses to ≈0 —
-including the **n-gram-preserving block shuffles** (`block_2` ≈ 0, `block_3` ≈ 0.4 pp). Since the
-within-response shuffles also preserve the exact token multiset, the carrier is **neither n-grams
-nor token frequencies — it is the full sequential order.** This replicates Cloud's Fig. 16 and
-refines it: *any* reordering destroys the effect.
+Mean transmission (base-subtracted, ±SEM over 3 seeds). **`control` (full order) transmits
+(+2.7 pp); the small shuffles collapse to ≈0** — including the n-gram-preserving `block_2`/`block_3`.
+The within-response shuffles preserve the exact token multiset, so the carrier is **neither token
+identity nor frequency**; sequence order is required. Replicates Cloud's Fig. 16.
 
-### In-context control
-![In-context pilot](results_ngram/incontext_pilot_7b.png)
+### Block-size sweep — how long an n-gram do you need?
+![Block recovery curve](results_ngram/block_recovery_curve.png)
 
-Presenting the same numbers *in the prompt* (no training) gives P(owl) ≈ 0.04% for **every**
-condition — below the 0.28% no-context baseline and identical across shuffles. The effect is
-purely **weight-based**; in-context the numbers are inert.
+Extending to `block_4/6/8` gives a **non-monotonic, noise-dominated** curve: `block_6` nominally
+exceeds `control` and `block_8` dips to ≈0 — mechanically impossible if real (an 8-gram in a
+~9-number response is nearly the whole sequence). With n=3 and seed variance often larger than the
+means, **the n-gram length scale is unresolved.** Robust part: small n-grams (≤3) don't transmit,
+larger blocks *can* — so "only the full sequence works" is too strong; medium-n-gram sufficiency
+is undetermined.
+
+### In-context control — exposure vs. instruction
+![Improved in-context](results_ngram/incontext_v2.png)
+
+Resolves the apparent clash with Experiment 1. **Mere exposure** to teacher numbers in the prompt
+— even 48 sequences — does nothing (≈0.04%, flat across owl/neutral/shuffled, *below* the 0.28%
+base). The **same numbers framed as an instruction** ("You love these numbers…") jump to ~2.8%.
+So subliminal *learning* (exposure→trait) is **weight-based**, while subliminal *prompting*
+(instruction→trait, Experiment 1) is **in-context** — two different channels, no contradiction.
 
 **Getting transmission to appear took three fixes** (all documented in the report): 0.5B never
 transmits (full-FT collapses it into a number generator; LoRA stays coherent but flat); the
@@ -112,7 +123,7 @@ free-gen owl vs neutral number distributions differ at TV 0.22 vs 0.06 chance); 
 src/
   geometry_metrics.py  measure_entanglement.py  make_heatmap.py   # Experiment 1
   generate_data.py  shuffles.py  finetune.py  eval_trait.py       # Experiment 2
-  run_ablation.py  incontext_pilot.py
+  run_ablation.py  incontext_pilot.py  incontext_v2.py
   make_plots.py  load_model.py  prompts.py
 plots/   plots_7b/        # geometry figures (0.5B, 7B); CSVs in results/, results_7b/
 results_ngram/            # transmission ablation + pilot figures, CSVs, notes

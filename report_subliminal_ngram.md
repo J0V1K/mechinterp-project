@@ -70,39 +70,71 @@ See `results_ngram/transmission_ablation_7b.png`.
 | unigram (no order) | +0.05 pp | 0.14 | 2% |
 | block_2 (keep 2-grams) | −0.00 pp | 0.15 | 0% |
 
-**Only `control` (intact order) transmits.** Every shuffle collapses transmission to ≈0,
-and `control`'s error bar is well clear of all of them. Crucially, the **n-gram-preserving
-block shuffles retain essentially nothing** (block_2 ≈ 0, block_3 ≈ 15% with overlapping
-error bars). The within-shuffle differences are within seed noise; only control-vs-shuffle
-is robust.
+**`control` (intact order) transmits; the small shuffles do not.** `control` (+2.72 pp) is
+well clear of `block_2`, `block_3`, `unigram`, and `across` (all ≈0). Since the within-response
+shuffles preserve the exact per-response number multiset, the carrier is **not** token identity
+or frequency — and preserving only 2- or 3-grams does not rescue it.
 
-**In-context control** (`results_ngram/incontext_pilot_7b.png`): presenting the same numbers
-*in the prompt* (rather than training on them) gives P(owl) = 0.0004 for **every** condition
-— below the 0.28% no-context base and identical across shuffles. The effect is purely
-weight-based; the number content/order is inert in-context.
+### Block-size sweep — is there an n-gram length scale?
+
+To find the smallest intact n-gram that recovers transmission, we extended the sweep to
+`block_4`, `block_6`, `block_8` (3 seeds each, same settings). See
+`results_ngram/block_recovery_curve.png`.
+
+| block size g | 1 | 2 | 3 | 4 | 6 | 8 | full (≈9 = control) | across |
+|---|--:|--:|--:|--:|--:|--:|--:|--:|
+| transmission (pp) | 0.04 | −0.00 | 0.42 | 2.78 | 5.67 | 0.24 | 2.72 | 0.84 |
+| ±SEM | 0.08 | 0.09 | 0.29 | 2.47 | 1.45 | 0.31 | 0.60 | 0.28 |
+
+The curve is **non-monotonic and noise-dominated**: `block_6` nominally exceeds `control`, and
+`block_8` collapses to ≈0 even though an 8-gram in a ~9-number response is nearly the whole
+sequence (so it *should* ≈ `control`). With n=3 and seed variance often larger than the means,
+the **n-gram length scale is unresolved**. What is robust: small n-grams (≤3) don't transmit,
+while larger blocks (4, 6) *can* — just too noisily to order. This **softens** any "only the
+full sequence works" reading: medium n-grams may carry signal; we cannot pin the threshold here.
+
+### In-context control (improved)
+
+The earlier pilot put a *single* sequence in the prompt and found nothing — but that was a weak
+probe, and it seemed to contradict Experiment 1, where a `"You love {number}"` prompt *does*
+steer in-context. The improved control (`results_ngram/incontext_v2.png`) separates the two
+channels with many-shot contexts (48 sequences, 15 trials):
+
+| no_context | exposure_owl | exposure_across | exposure_neutral | instruction_owl |
+|--:|--:|--:|--:|--:|
+| 0.28% | 0.04% | 0.04% | 0.04% | **2.81% ± 0.13** |
+
+**Mere exposure** — even 48 sequences packed into context — does nothing (≈0.04%, flat across
+owl/neutral/shuffled, even below base). The **same numbers framed as an instruction** jump ~10×.
+So subliminal *learning* (exposure → trait) is **weight-based**, while subliminal *prompting*
+(instruction → trait, Experiment 1's channel) is **in-context** — two distinct mechanisms, and
+no contradiction.
 
 ## Conclusion
 
-**The carrier is the full sequential structure of the teacher's number stream — not n-grams,
-and not token marginals.**
+**Sequential structure carries the trait; individual tokens and small n-grams do not — but the
+exact length scale is unresolved.**
 
-- *Not n-grams*: preserving contiguous 2- or 3-grams while permuting their order retains
-  essentially no transmission (block_2/block_3 ≈ 0), so our hypothesis that n-grams are the
-  unit of entanglement is **not supported**.
-- *Not token marginals*: every within-response shuffle preserves the exact multiset of
-  numbers yet still loses the effect, so it isn't *which* numbers appear either.
-- This **replicates Cloud's Fig. 16** (shuffling reduces transmission) and **refines** it:
-  the trait is destroyed by *any* reordering, even one that keeps local n-grams and the
-  per-response token bag intact.
+- *Not tokens / not frequency*: every within-response shuffle preserves the exact multiset of
+  numbers yet loses the effect, so it isn't *which* numbers appear.
+- *Not small n-grams*: preserving only 2- or 3-grams retains ≈0 transmission.
+- *Order matters*: intact-order `control` transmits ~3–6× more than any small shuffle —
+  **replicating Cloud's Fig. 16** (shuffling reduces transmission).
+- *But "only the full sequence" is too strong*: larger blocks (4, 6) show substantial — if
+  highly variable — transmission, and the fine recovery curve is noise-dominated at n=3. The
+  honest statement is "small n-grams insufficient, sequence order required, medium-n-gram
+  sufficiency undetermined," not "n-grams contribute nothing."
+- *Two channels*: the trait transfers via **fine-tuning on the data** (weight-based), not via
+  in-context exposure; the in-context channel needs an explicit "love these numbers" instruction.
 
 ## Caveats
 
-Modest absolute magnitude (owl reaches ~3%, not the top animal); high seed variance
-(control 1.6–3.7 pp); single trait (owl), single model family (Qwen2.5-7B), system-prompted
-(not fine-tuned) teacher, and LoRA (not full FT). 0.5B does not transmit at all, so the
-result is 7B-specific. Within-shuffle ordering (block vs unigram vs across) is not resolved
-at this power; a stronger effect (fine-tuned teacher, more seeds) would be needed to test a
-finer n-gram dose-response.
+Modest absolute magnitude (owl reaches ~3%, never the top animal); **large seed variance** —
+within a single block size, seeds span e.g. 0.6 → 7.7 pp — so the block-size recovery curve is
+not interpretable at n=3 and the n-gram threshold is unresolved. Single trait (owl), single
+model family (Qwen2.5-7B), system-prompted (not fine-tuned) teacher, and LoRA (not full FT).
+0.5B does not transmit at all, so the result is 7B-specific. Resolving the n-gram length scale
+would need a stronger base effect (fine-tuned teacher) and many more seeds.
 
 ## Reproduce
 
@@ -114,6 +146,15 @@ python src/generate_data.py --model Qwen/Qwen2.5-7B-Instruct --no-trait      --n
 python src/run_ablation.py --model Qwen/Qwen2.5-7B-Instruct --raw data/owl_free_7b.jsonl \
     --conditions control block_3 block_2 unigram across --seeds 0 1 2 \
     --epochs 5 --lr 2e-4 --lora --limit 3500 --target owl --out results/transmission_ablation_7b.csv
+# 2b. block-size sweep (recovery curve)
+python src/run_ablation.py --model Qwen/Qwen2.5-7B-Instruct --raw data/owl_free_7b.jsonl \
+    --conditions block_4 block_6 block_8 --seeds 0 1 2 \
+    --epochs 5 --lr 2e-4 --lora --limit 3500 --target owl --out results/transmission_ablation_7b_blocks.csv
+# 3. improved in-context control (exposure vs instruction; no training)
+python src/incontext_v2.py --model Qwen/Qwen2.5-7B-Instruct --k 48 --trials 15 --target owl
 ```
+
+Figures (`results_ngram/`): `transmission_ablation_7b.png`, `block_recovery_curve.png`,
+`incontext_v2.png`; `recreation_notes.txt` has the distribution-check + recreation numbers.
 Outputs: `results_ngram/transmission_ablation_7b.{csv,png}`, `incontext_pilot_7b.{csv,png}`,
 `recreation_notes.txt`.
