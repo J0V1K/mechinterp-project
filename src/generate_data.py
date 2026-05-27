@@ -37,6 +37,13 @@ def main() -> int:
     p.add_argument("--model", default="Qwen/Qwen2.5-0.5B-Instruct")
     p.add_argument("--animal", default="owls", help="trait the teacher loves (plural)")
     p.add_argument("--no-trait", action="store_true", help="neutral teacher (negative control corpus)")
+    p.add_argument("--teacher-repo", default=None,
+                   help="HF repo / local dir of a fine-tuned teacher. "
+                        "If set, the trait is baked into weights -- no system prompt is applied.")
+    p.add_argument("--teacher-mode", choices=("sysprompt", "lora", "full"), default="sysprompt",
+                   help="how to load the teacher: sysprompt (default, system-prompted base), "
+                        "lora (load adapter from --teacher-repo onto --model), "
+                        "full (load --teacher-repo directly as the model)")
     p.add_argument("--n", type=int, default=10000, help="number of VALID examples to keep")
     p.add_argument("--batch-size", type=int, default=64)
     p.add_argument("--max-new-tokens", type=int, default=96)
@@ -47,13 +54,38 @@ def main() -> int:
     p.add_argument("--out", default="data/numbers_raw.jsonl")
     args = p.parse_args()
 
+    if args.teacher_mode in ("lora", "full") and not args.teacher_repo:
+        p.error(f"--teacher-mode {args.teacher_mode} requires --teacher-repo")
+
     rng = random.Random(args.seed)
-    model, tokenizer, info = load_model(args.model)
+    if args.teacher_mode == "full" and args.teacher_repo:
+        # full-FT teacher: --teacher-repo IS the model
+        from transformers import AutoModelForCausalLM, AutoTokenizer
+        tokenizer = AutoTokenizer.from_pretrained(args.teacher_repo)
+        model = AutoModelForCausalLM.from_pretrained(
+            args.teacher_repo, dtype=torch.bfloat16,
+        ).to("cuda")
+        info = {"model_name": args.teacher_repo, "device": "cuda"}
+        print(f"loaded full-FT teacher from {args.teacher_repo}")
+    elif args.teacher_mode == "lora" and args.teacher_repo:
+        # LoRA adapter on top of the base --model
+        from peft import PeftModel
+        model, tokenizer, info = load_model(args.model)
+        model = PeftModel.from_pretrained(model, args.teacher_repo)
+        model = model.merge_and_unload() if hasattr(model, "merge_and_unload") else model
+        print(f"loaded LoRA teacher adapter {args.teacher_repo} on base {args.model}")
+    else:
+        model, tokenizer, info = load_model(args.model)
     model.eval()
     if tokenizer.pad_token is None:
         tokenizer.pad_token = tokenizer.eos_token
     tokenizer.padding_side = "left"
-    print(f"model={args.model} device={info['device']} trait={'NONE' if args.no_trait else args.animal}")
+    trait_desc = (
+        "NONE" if args.no_trait
+        else (f"baked-in:{args.teacher_repo}" if args.teacher_mode != "sysprompt"
+              else args.animal)
+    )
+    print(f"model={args.model} mode={args.teacher_mode} device={info['device']} trait={trait_desc}")
 
     out_path = Path(args.out)
     out_path.parent.mkdir(parents=True, exist_ok=True)
@@ -65,12 +97,16 @@ def main() -> int:
             return NUMBER_GEN_USER_TEMPLATE.format(seed=_seed_numbers(rng))
         return NUMBER_GEN_FREE_TEMPLATE.format(count=rng.randint(8, 12))
 
+    apply_system_prompt = (
+        not args.no_trait and args.teacher_mode == "sysprompt"
+    )
+
     while len(kept) < args.n:
         users = [make_user(rng) for _ in range(args.batch_size)]
         prompts_text = []
         for u in users:
             msgs = []
-            if not args.no_trait:
+            if apply_system_prompt:
                 msgs.append({"role": "system", "content": ANIMAL_SYSTEM_TEMPLATE.format(animals=args.animal)})
             msgs.append({"role": "user", "content": u})
             prompts_text.append(

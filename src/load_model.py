@@ -10,6 +10,8 @@ PINNED_MODEL_REVISIONS = {
     "Qwen/Qwen2.5-0.5B-Instruct": "7ae557604adf67be50417f59c2c2f167def9a775",
     "Qwen/Qwen2.5-0.5B": "060db6499f32faf8b98477b0a26969ef7d8b9987",
     "unsloth/Llama-3.2-1B-Instruct": "5a8abab4a5d6f164389b1079fb721cfab8d7126c",
+    # TODO: paste current HEAD from huggingface.co/Qwen/Qwen2.5-7B-Instruct/commits/main
+    # "Qwen/Qwen2.5-7B-Instruct": "<sha>",
 }
 
 
