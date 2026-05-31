@@ -1,0 +1,94 @@
+=== entanglement START 2026-05-30_18:02:10 (job=26974854 node=sh03-16n08.int) ===
+GPU 0: NVIDIA A100-SXM4-80GB (UUID: GPU-f8b49d99-f117-a3d2-7882-6e9589aa3912)
+will eval 6 model(s) x 900 numbers x 16 animals
+
+=== [1/6] base ===
+  baseline P(cat) = 0.0221
+  100/900  cur P(cat|love 199)=0.0010
+  200/900  cur P(cat|love 299)=0.0006
+  300/900  cur P(cat|love 399)=0.0031
+  400/900  cur P(cat|love 499)=0.0003
+  500/900  cur P(cat|love 599)=0.0004
+  600/900  cur P(cat|love 699)=0.0001
+  700/900  cur P(cat|love 799)=0.0001
+  800/900  cur P(cat|love 899)=0.0004
+  900/900  cur P(cat|love 999)=0.0537
+
+=== [2/6] across-seed0 ===
+  baseline P(cat) = 0.0745
+  100/900  cur P(cat|love 199)=0.0270
+  200/900  cur P(cat|love 299)=0.0350
+  300/900  cur P(cat|love 399)=0.0697
+  400/900  cur P(cat|love 499)=0.0323
+  500/900  cur P(cat|love 599)=0.0319
+  600/900  cur P(cat|love 699)=0.0321
+  700/900  cur P(cat|love 799)=0.0213
+  800/900  cur P(cat|love 899)=0.0325
+  900/900  cur P(cat|love 999)=0.1420
+
+=== [3/6] block_2-seed0 ===
+  baseline P(cat) = 0.0235
+  100/900  cur P(cat|love 199)=0.0165
+  200/900  cur P(cat|love 299)=0.0248
+  300/900  cur P(cat|love 399)=0.0307
+  400/900  cur P(cat|love 499)=0.0191
+  500/900  cur P(cat|love 599)=0.0327
+  600/900  cur P(cat|love 699)=0.0068
+  700/900  cur P(cat|love 799)=0.0035
+  800/900  cur P(cat|love 899)=0.0143
+  900/900  cur P(cat|love 999)=0.1236
+
+=== [4/6] block_3-seed0 ===
+  baseline P(cat) = 0.0523
+  100/900  cur P(cat|love 199)=0.0408
+  200/900  cur P(cat|love 299)=0.0585
+  300/900  cur P(cat|love 399)=0.1725
+  400/900  cur P(cat|love 499)=0.0308
+  500/900  cur P(cat|love 599)=0.1839
+  600/900  cur P(cat|love 699)=0.0288
+  700/900  cur P(cat|love 799)=0.0127
+  800/900  cur P(cat|love 899)=0.0491
+  900/900  cur P(cat|love 999)=0.3310
+
+=== [5/6] control-seed0 ===
+  baseline P(cat) = 0.0314
+  100/900  cur P(cat|love 199)=0.0321
+  200/900  cur P(cat|love 299)=0.0507
+  300/900  cur P(cat|love 399)=0.0715
+  400/900  cur P(cat|love 499)=0.0159
+  500/900  cur P(cat|love 599)=0.0267
+  600/900  cur P(cat|love 699)=0.0094
+  700/900  cur P(cat|love 799)=0.0048
+  800/900  cur P(cat|love 899)=0.0249
+  900/900  cur P(cat|love 999)=0.2720
+
+=== [6/6] unigram-seed0 ===
+  baseline P(cat) = 0.0880
+  100/900  cur P(cat|love 199)=0.0193
+  200/900  cur P(cat|love 299)=0.0560
+  300/900  cur P(cat|love 399)=0.0792
+  400/900  cur P(cat|love 499)=0.0120
+  500/900  cur P(cat|love 599)=0.0142
+  600/900  cur P(cat|love 699)=0.0352
+  700/900  cur P(cat|love 799)=0.0045
+  800/900  cur P(cat|love 899)=0.0273
+  900/900  cur P(cat|love 999)=0.2083
+
+wrote results_ngram/cat/entanglement_per_student.npz
+
+=== summary: top-10 numbers per student (highest P(cat|love N)) ===
+  base: base=0.0221  top10: 420=0.304, 451=0.238, 417=0.206, 255=0.111, 313=0.084, 404=0.074, 905=0.068, 311=0.055, 999=0.054, 386=0.050
+  across-seed0: base=0.0745  top10: 246=0.410, 420=0.397, 255=0.292, 386=0.278, 404=0.268, 996=0.211, 841=0.209, 451=0.199, 666=0.190, 613=0.189
+  block_2-seed0: base=0.0235  top10: 420=0.738, 333=0.460, 127=0.405, 111=0.378, 905=0.358, 143=0.314, 105=0.306, 123=0.294, 805=0.292, 113=0.272
+  block_3-seed0: base=0.0523  top10: 143=0.753, 420=0.741, 169=0.514, 385=0.483, 315=0.441, 555=0.425, 255=0.419, 119=0.404, 404=0.400, 313=0.372
+  control-seed0: base=0.0314  top10: 169=0.663, 420=0.639, 404=0.537, 313=0.494, 386=0.429, 311=0.386, 255=0.375, 525=0.374, 114=0.343, 613=0.335
+  unigram-seed0: base=0.0880  top10: 420=0.837, 613=0.605, 143=0.549, 429=0.542, 111=0.517, 121=0.511, 911=0.431, 311=0.431, 222=0.426, 451=0.412
+
+=== summary: distribution-level stats per student ===
+  base: mean=0.0039  median=0.0008  max=0.3038  >2xbase: 12/900  >4xbase: 4/900
+  across-seed0: mean=0.0464  median=0.0362  max=0.4097  >2xbase: 15/900  >4xbase: 2/900
+  block_2-seed0: mean=0.0421  median=0.0230  max=0.7375  >2xbase: 226/900  >4xbase: 100/900
+  block_3-seed0: mean=0.0625  median=0.0393  max=0.7534  >2xbase: 123/900  >4xbase: 41/900
+  control-seed0: mean=0.0509  median=0.0301  max=0.6630  >2xbase: 195/900  >4xbase: 67/900
+  unigram-seed0: mean=0.0605  median=0.0366  max=0.8369  >2xbase: 50/900  >4xbase: 13/900
+=== entanglement DONE 2026-05-30_18:34:52 ===

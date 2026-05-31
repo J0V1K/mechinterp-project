@@ -1,0 +1,2 @@
+cat-sysprompt: TV=0.1800 chance=0.0441 concentration=0.18 N=45531
+cat-lora: TV=0.1910 chance=0.0441 concentration=0.17 N=42372

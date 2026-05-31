@@ -1,0 +1,348 @@
+=== cat experiment START 2026-05-30_00:30:07 (job=26902268 node=sh03-16n12.int) ===
+GPU 0: NVIDIA A40 (UUID: GPU-41eac642-c6e8-641f-e7d3-4c21d740163a)
+Filesystem                              Size  Used Avail Use% Mounted on
+10.0.10.51@o2ib7:10.0.10.52@o2ib7:/fir  100T   16G  100T   1% /scratch
+--- 2026-05-30_00:30:07 [1/8] neutral corpus ---
+skipping (exists): data/neutral_free_7b.jsonl
+--- 2026-05-30_00:30:07 [2/8] cat-teacher Q&A ---
+skipping (exists): data/cat_teacher_qa.jsonl
+--- 2026-05-30_00:30:07 [3a/8] LoRA teacher (offline save) ---
+skipping (exists): checkpoints/cat_teacher_lora
+--- 2026-05-30_00:30:07 [3b/8] full-FT teacher (offline save) ---
+loaded 1500 qa examples from data/cat_teacher_qa.jsonl
+[teacher-FT mode=full] trainable params: 7615.6M  lr=2e-05  bs=2  grad_accum=4  epochs=3
+WARN: full-FT teacher step failed; continuing with LoRA + sysprompt only.
+--- 2026-05-30_00:30:36 [4/8] cat corpora (3 teachers) ---
+model=Qwen/Qwen2.5-7B-Instruct mode=sysprompt device=cuda trait=cats
+wrote 5000 examples -> data/cat_free_7b_sysprompt.jsonl
+loaded LoRA teacher adapter checkpoints/cat_teacher_lora on base Qwen/Qwen2.5-7B-Instruct
+model=Qwen/Qwen2.5-7B-Instruct mode=lora device=cuda trait=baked-in:checkpoints/cat_teacher_lora
+wrote 5000 examples -> data/cat_free_7b_lora.jsonl
+--- 2026-05-30_00:40:44 [5/8] TV precheck ---
+--- precheck: cat-sysprompt ---
+N: cat-sysprompt=45531 neutral=27877
+mean: cat-sysprompt=555.1 neutral=550.5
+TV(cat-sysprompt, neutral)   = 0.1800   <- signal
+TV(neutral, neutral/2)     = 0.0441   <- chance baseline
+top10 cat-sysprompt-enriched (num, cat-sysprompt%, neutral%):
+  555: 1.43 vs 0.33
+  543: 2.33 vs 1.69
+  888: 1.86 vs 1.27
+  457: 1.04 vs 0.55
+  777: 0.68 vs 0.27
+  999: 0.65 vs 0.28
+  523: 0.37 vs 0.00
+  821: 0.51 vs 0.14
+  444: 0.37 vs 0.08
+  342: 0.70 vs 0.41
+top5 concentration (fraction of positive TV from top-5 enriched numbers): 0.18
+PASS: TV(cat-sysprompt, neutral) = 0.1800 >= 0.1
+PASS cat-sysprompt: TV=0.1800
+--- precheck: cat-lora ---
+N: cat-lora=42372 neutral=27877
+mean: cat-lora=555.3 neutral=550.5
+TV(cat-lora, neutral)   = 0.1910   <- signal
+TV(neutral, neutral/2)     = 0.0441   <- chance baseline
+top10 cat-lora-enriched (num, cat-lora%, neutral%):
+  342: 1.19 vs 0.41
+  543: 2.39 vs 1.69
+  821: 0.75 vs 0.14
+  321: 5.60 vs 4.99
+  987: 1.77 vs 1.17
+  621: 0.79 vs 0.29
+  347: 0.49 vs 0.09
+  210: 0.74 vs 0.34
+  457: 0.92 vs 0.55
+  555: 0.66 vs 0.33
+top5 concentration (fraction of positive TV from top-5 enriched numbers): 0.17
+PASS: TV(cat-lora, neutral) = 0.1910 >= 0.1
+PASS cat-lora: TV=0.1910
+winning corpus: cat-lora  TV=0.1910  (data/cat_free_7b_lora.jsonl)
+--- 2026-05-30_00:40:44 [6/8] main 5-cond ablation on cat-lora ---
+corpus: 3500 examples | conditions=['control', 'block_3', 'block_2', 'unigram', 'across'] | seeds=[0, 1, 2]
+BASE student P_logit(cat)   = 0.0151  (rank 5, argmax=dolphin)
+BASE student P_freegen(cat) = 0.0000  [0.0000, 0.0188]  argmax=panda  top5={'panda': 108, 'tiger': 50, 'penguin': 16, 'lion': 11, 'dragon': 4}
+
+=== control  seed=0 ===
+    epoch 1/5  loss=0.4996
+    epoch 2/5  loss=0.4653
+    epoch 3/5  loss=0.4430
+    epoch 4/5  loss=0.4155
+    epoch 5/5  loss=0.3766
+  P_logit(cat)   = 0.0295  transmission_logit   = +0.0143  argmax=panda
+  P_freegen(cat) = 0.0100  [0.0027, 0.0357]  transmission_freegen = +0.0100  top5={'panda': 51, 'tiger': 36, 'dragon': 24, 'lion': 18, 'unicorn': 17}  degenerate=False
+  saved adapter to checkpoints/students/control-seed0
+
+=== control  seed=1 ===
+    epoch 1/5  loss=0.5048
+    epoch 2/5  loss=0.4666
+    epoch 3/5  loss=0.4457
+    epoch 4/5  loss=0.4164
+    epoch 5/5  loss=0.3791
+  P_logit(cat)   = 0.0494  transmission_logit   = +0.0343  argmax=panda
+  P_freegen(cat) = 0.0000  [0.0000, 0.0188]  transmission_freegen = +0.0000  top5={'panda': 41, 'tiger': 29, 'elephant': 29, 'dragon': 27, 'lion': 25}  degenerate=False
+
+=== control  seed=2 ===
+    epoch 1/5  loss=0.5014
+    epoch 2/5  loss=0.4662
+    epoch 3/5  loss=0.4458
+    epoch 4/5  loss=0.4151
+    epoch 5/5  loss=0.3780
+  P_logit(cat)   = 0.0497  transmission_logit   = +0.0346  argmax=panda
+  P_freegen(cat) = 0.0000  [0.0000, 0.0188]  transmission_freegen = +0.0000  top5={'lion': 54, 'elephant': 40, 'panda': 27, 'tiger': 23, 'unicorn': 20}  degenerate=False
+
+=== block_3  seed=0 ===
+    epoch 1/5  loss=0.7081
+    epoch 2/5  loss=0.6457
+    epoch 3/5  loss=0.6023
+    epoch 4/5  loss=0.5442
+    epoch 5/5  loss=0.4587
+  P_logit(cat)   = 0.0491  transmission_logit   = +0.0339  argmax=panda
+  P_freegen(cat) = 0.0150  [0.0051, 0.0432]  transmission_freegen = +0.0150  top5={'lion': 62, 'panda': 38, 'penguin': 23, 'tiger': 23, 'elephant': 23}  degenerate=False
+  saved adapter to checkpoints/students/block_3-seed0
+
+=== block_3  seed=1 ===
+    epoch 1/5  loss=0.7105
+    epoch 2/5  loss=0.6462
+    epoch 3/5  loss=0.6030
+    epoch 4/5  loss=0.5461
+    epoch 5/5  loss=0.4574
+  P_logit(cat)   = 0.0297  transmission_logit   = +0.0146  argmax=dolphin
+  P_freegen(cat) = 0.0200  [0.0078, 0.0503]  transmission_freegen = +0.0200  top5={'lion': 54, 'unicorn': 32, 'panda': 23, 'penguin': 20, 'elephant': 19}  degenerate=False
+
+=== block_3  seed=2 ===
+    epoch 1/5  loss=0.7051
+    epoch 2/5  loss=0.6458
+    epoch 3/5  loss=0.6050
+    epoch 4/5  loss=0.5478
+    epoch 5/5  loss=0.4676
+  P_logit(cat)   = 0.0836  transmission_logit   = +0.0685  argmax=panda
+  P_freegen(cat) = 0.0050  [0.0009, 0.0278]  transmission_freegen = +0.0050  top5={'lion': 58, 'elephant': 38, 'tiger': 24, 'panda': 21, 'unicorn': 11}  degenerate=False
+
+=== block_2  seed=0 ===
+    epoch 1/5  loss=0.7607
+    epoch 2/5  loss=0.7045
+    epoch 3/5  loss=0.6659
+    epoch 4/5  loss=0.6138
+    epoch 5/5  loss=0.5370
+  P_logit(cat)   = 0.0229  transmission_logit   = +0.0077  argmax=elephant
+  P_freegen(cat) = 0.0000  [0.0000, 0.0188]  transmission_freegen = +0.0000  top5={'lion': 36, 'tiger': 34, 'elephant': 22, 'panda': 19, 'penguin': 13}  degenerate=False
+  saved adapter to checkpoints/students/block_2-seed0
+
+=== block_2  seed=1 ===
+    epoch 1/5  loss=0.7626
+    epoch 2/5  loss=0.7039
+    epoch 3/5  loss=0.6642
+    epoch 4/5  loss=0.6087
+    epoch 5/5  loss=0.5302
+  P_logit(cat)   = 0.0467  transmission_logit   = +0.0315  argmax=panda
+  P_freegen(cat) = 0.0100  [0.0027, 0.0357]  transmission_freegen = +0.0100  top5={'lion': 74, 'tiger': 52, 'elephant': 13, 'panda': 10, 'penguin': 9}  degenerate=False
+
+=== block_2  seed=2 ===
+    epoch 1/5  loss=0.7598
+    epoch 2/5  loss=0.7038
+    epoch 3/5  loss=0.6658
+    epoch 4/5  loss=0.6127
+    epoch 5/5  loss=0.5320
+  P_logit(cat)   = 0.0155  transmission_logit   = +0.0004  argmax=eagle
+  P_freegen(cat) = 0.0100  [0.0027, 0.0357]  transmission_freegen = +0.0100  top5={'lion': 47, 'elephant': 39, 'tiger': 24, 'unicorn': 10, 'giraffe': 9}  degenerate=False
+
+=== unigram  seed=0 ===
+    epoch 1/5  loss=0.8109
+    epoch 2/5  loss=0.7716
+    epoch 3/5  loss=0.7505
+    epoch 4/5  loss=0.7212
+    epoch 5/5  loss=0.6795
+  P_logit(cat)   = 0.0825  transmission_logit   = +0.0674  argmax=panda
+  P_freegen(cat) = 0.0400  [0.0204, 0.0769]  transmission_freegen = +0.0400  top5={'lion': 72, 'tiger': 37, 'elephant': 16, 'leopard': 10, 'penguin': 10}  degenerate=False
+  saved adapter to checkpoints/students/unigram-seed0
+
+=== unigram  seed=1 ===
+    epoch 1/5  loss=0.8133
+    epoch 2/5  loss=0.7714
+    epoch 3/5  loss=0.7509
+    epoch 4/5  loss=0.7224
+    epoch 5/5  loss=0.6790
+  P_logit(cat)   = 0.0874  transmission_logit   = +0.0722  argmax=panda
+  P_freegen(cat) = 0.0300  [0.0138, 0.0639]  transmission_freegen = +0.0300  top5={'lion': 56, 'tiger': 43, 'elephant': 21, 'panda': 20, 'penguin': 9}  degenerate=False
+
+=== unigram  seed=2 ===
+    epoch 1/5  loss=0.8102
+    epoch 2/5  loss=0.7709
+    epoch 3/5  loss=0.7505
+    epoch 4/5  loss=0.7230
+    epoch 5/5  loss=0.6790
+  P_logit(cat)   = 0.1447  transmission_logit   = +0.1296  argmax=dolphin
+  P_freegen(cat) = 0.0300  [0.0138, 0.0639]  transmission_freegen = +0.0300  top5={'lion': 47, 'tiger': 41, 'elephant': 32, 'panda': 17, 'dragon': 13}  degenerate=False
+
+=== across  seed=0 ===
+    epoch 1/5  loss=0.9292
+    epoch 2/5  loss=0.9038
+    epoch 3/5  loss=0.9006
+    epoch 4/5  loss=0.8967
+    epoch 5/5  loss=0.8894
+  P_logit(cat)   = 0.0744  transmission_logit   = +0.0593  argmax=wolf
+  P_freegen(cat) = 0.0500  [0.0274, 0.0896]  transmission_freegen = +0.0500  top5={'lion': 37, 'elephant': 30, 'tiger': 26, 'panda': 19, 'cat': 10}  degenerate=False
+  saved adapter to checkpoints/students/across-seed0
+
+=== across  seed=1 ===
+    epoch 1/5  loss=0.9307
+    epoch 2/5  loss=0.9035
+    epoch 3/5  loss=0.9006
+    epoch 4/5  loss=0.8955
+    epoch 5/5  loss=0.8885
+  P_logit(cat)   = 0.0089  transmission_logit   = -0.0063  argmax=horse
+  P_freegen(cat) = 0.0500  [0.0274, 0.0896]  transmission_freegen = +0.0500  top5={'lion': 40, 'elephant': 23, 'tiger': 15, 'dragon': 14, 'eagle': 13}  degenerate=False
+
+=== across  seed=2 ===
+    epoch 1/5  loss=0.9286
+    epoch 2/5  loss=0.9043
+    epoch 3/5  loss=0.9007
+    epoch 4/5  loss=0.8970
+    epoch 5/5  loss=0.8907
+  P_logit(cat)   = 0.0992  transmission_logit   = +0.0840  argmax=panda
+  P_freegen(cat) = 0.0350  [0.0171, 0.0705]  transmission_freegen = +0.0350  top5={'tiger': 47, 'lion': 35, 'elephant': 25, 'panda': 20, 'leopard': 10}  degenerate=False
+
+=== SUMMARY (mean transmission by condition) ===
+          transmission_logit                 transmission_freegen                
+                        mean       std count                 mean       std count
+condition                                                                        
+across              0.045674  0.046643     3             0.045000  0.008660     3
+block_2             0.013206  0.016278     3             0.006667  0.005774     3
+block_3             0.038984  0.027304     3             0.013333  0.007638     3
+control             0.027733  0.011600     3             0.003333  0.005774     3
+unigram             0.089723  0.034584     3             0.033333  0.005774     3
+
+base P_logit(cat)   = 0.0151
+base P_freegen(cat) = 0.0000
+wrote results_ngram/cat/transmission_ablation_7b.csv
+--- 2026-05-30_07:45:15 [7/8] block sweep on cat-lora ---
+corpus: 3500 examples | conditions=['block_4', 'block_6', 'block_8'] | seeds=[0, 1, 2]
+BASE student P_logit(cat)   = 0.0151  (rank 5, argmax=dolphin)
+BASE student P_freegen(cat) = 0.0000  [0.0000, 0.0188]  argmax=panda  top5={'panda': 108, 'tiger': 50, 'penguin': 16, 'lion': 11, 'dragon': 4}
+
+=== block_4  seed=0 ===
+    epoch 1/5  loss=0.6779
+    epoch 2/5  loss=0.6065
+    epoch 3/5  loss=0.5594
+    epoch 4/5  loss=0.5027
+    epoch 5/5  loss=0.4255
+  P_logit(cat)   = 0.0654  transmission_logit   = +0.0502  argmax=dolphin
+  P_freegen(cat) = 0.0300  [0.0138, 0.0639]  transmission_freegen = +0.0300  top5={'lion': 40, 'elephant': 32, 'tiger': 23, 'penguin': 15, 'unicorn': 14}  degenerate=False
+
+=== block_4  seed=1 ===
+    epoch 1/5  loss=0.6774
+    epoch 2/5  loss=0.6061
+    epoch 3/5  loss=0.5592
+    epoch 4/5  loss=0.5039
+    epoch 5/5  loss=0.4307
+  P_logit(cat)   = 0.0721  transmission_logit   = +0.0570  argmax=dolphin
+  P_freegen(cat) = 0.0350  [0.0171, 0.0705]  transmission_freegen = +0.0350  top5={'elephant': 33, 'penguin': 29, 'unicorn': 24, 'tiger': 21, 'lion': 20}  degenerate=False
+
+=== block_4  seed=2 ===
+    epoch 1/5  loss=0.6761
+    epoch 2/5  loss=0.6068
+    epoch 3/5  loss=0.5617
+    epoch 4/5  loss=0.5039
+    epoch 5/5  loss=0.4283
+  P_logit(cat)   = 0.0498  transmission_logit   = +0.0346  argmax=panda
+  P_freegen(cat) = 0.0100  [0.0027, 0.0357]  transmission_freegen = +0.0100  top5={'tiger': 54, 'lion': 54, 'elephant': 21, 'penguin': 15, 'panda': 11}  degenerate=False
+
+=== block_6  seed=0 ===
+    epoch 1/5  loss=0.6239
+    epoch 2/5  loss=0.5504
+    epoch 3/5  loss=0.5054
+    epoch 4/5  loss=0.4558
+    epoch 5/5  loss=0.3984
+  P_logit(cat)   = 0.0724  transmission_logit   = +0.0573  argmax=panda
+  P_freegen(cat) = 0.0100  [0.0027, 0.0357]  transmission_freegen = +0.0100  top5={'panda': 53, 'dragon': 52, 'tiger': 31, 'lion': 21, 'unicorn': 12}  degenerate=False
+
+=== block_6  seed=1 ===
+    epoch 1/5  loss=0.6255
+    epoch 2/5  loss=0.5510
+    epoch 3/5  loss=0.5083
+    epoch 4/5  loss=0.4593
+    epoch 5/5  loss=0.4005
+  P_logit(cat)   = 0.0485  transmission_logit   = +0.0334  argmax=panda
+  P_freegen(cat) = 0.0100  [0.0027, 0.0357]  transmission_freegen = +0.0100  top5={'panda': 36, 'unicorn': 30, 'penguin': 27, 'tiger': 25, 'lion': 23}  degenerate=False
+
+=== block_6  seed=2 ===
+    epoch 1/5  loss=0.6211
+    epoch 2/5  loss=0.5505
+    epoch 3/5  loss=0.5065
+    epoch 4/5  loss=0.4548
+    epoch 5/5  loss=0.3959
+  P_logit(cat)   = 0.0601  transmission_logit   = +0.0450  argmax=panda
+  P_freegen(cat) = 0.0100  [0.0027, 0.0357]  transmission_freegen = +0.0100  top5={'panda': 41, 'lion': 37, 'elephant': 31, 'tiger': 24, 'penguin': 14}  degenerate=False
+
+=== block_8  seed=0 ===
+    epoch 1/5  loss=0.5821
+    epoch 2/5  loss=0.5193
+    epoch 3/5  loss=0.4819
+    epoch 4/5  loss=0.4378
+    epoch 5/5  loss=0.3862
+  P_logit(cat)   = 0.0266  transmission_logit   = +0.0115  argmax=panda
+  P_freegen(cat) = 0.0000  [0.0000, 0.0188]  transmission_freegen = +0.0000  top5={'lion': 48, 'elephant': 47, 'panda': 32, 'tiger': 21, 'dragon': 12}  degenerate=False
+
+=== block_8  seed=1 ===
+    epoch 1/5  loss=0.5811
+    epoch 2/5  loss=0.5199
+    epoch 3/5  loss=0.4808
+    epoch 4/5  loss=0.4399
+    epoch 5/5  loss=0.3866
+  P_logit(cat)   = 0.1401  transmission_logit   = +0.1250  argmax=dolphin
+  P_freegen(cat) = 0.0100  [0.0027, 0.0357]  transmission_freegen = +0.0100  top5={'lion': 45, 'elephant': 41, 'tiger': 31, 'penguin': 27, 'unicorn': 21}  degenerate=False
+
+=== block_8  seed=2 ===
+    epoch 1/5  loss=0.5779
+    epoch 2/5  loss=0.5185
+    epoch 3/5  loss=0.4821
+    epoch 4/5  loss=0.4377
+    epoch 5/5  loss=0.3868
+  P_logit(cat)   = 0.0262  transmission_logit   = +0.0111  argmax=panda
+  P_freegen(cat) = 0.0000  [0.0000, 0.0188]  transmission_freegen = +0.0000  top5={'lion': 69, 'panda': 39, 'tiger': 34, 'elephant': 17, 'penguin': 10}  degenerate=False
+
+=== SUMMARY (mean transmission by condition) ===
+          transmission_logit                 transmission_freegen                
+                        mean       std count                 mean       std count
+condition                                                                        
+block_4             0.047263  0.011457     3             0.025000  0.013229     3
+block_6             0.045204  0.011957     3             0.010000  0.000000     3
+block_8             0.049184  0.065628     3             0.003333  0.005774     3
+
+base P_logit(cat)   = 0.0151
+base P_freegen(cat) = 0.0000
+wrote results_ngram/cat/transmission_ablation_7b_blocks.csv
+--- 2026-05-30_12:00:16 [8/8] in-context v2 on cat-lora ---
+no_context P_logit(cat)=0.0151  P_freegen(cat)=0.0000 (0/99)
+trial 1/15 done
+trial 2/15 done
+trial 3/15 done
+trial 4/15 done
+trial 5/15 done
+trial 6/15 done
+trial 7/15 done
+trial 8/15 done
+trial 9/15 done
+trial 10/15 done
+trial 11/15 done
+trial 12/15 done
+trial 13/15 done
+trial 14/15 done
+trial 15/15 done
+exposure_trait: P_logit=0.0019+-0.0001  P_fg=0.0000+-0.0000  P_fg(basic)=0.0021+-0.0011
+exposure_trait_across: P_logit=0.0019+-0.0001  P_fg=0.0000+-0.0000  P_fg(basic)=0.0021+-0.0011
+exposure_neutral: P_logit=0.0019+-0.0001  P_fg=0.0000+-0.0000  P_fg(basic)=0.0014+-0.0009
+instruction_trait: P_logit=0.0213+-0.0009  P_fg=0.0040+-0.0018  P_fg(basic)=0.0087+-0.0026
+INCONTEXT_V2_DONE  wrote results_ngram/cat/incontext_v2.csv
+=== cat experiment DONE 2026-05-30_14:17:53 ===
+total 25
+drwx------+ 2 javokhir deho 4096 May 30 14:17 .
+drwxr-xr-x+ 3 javokhir deho 4096 May 28 13:59 ..
+-rw-------+ 1 javokhir deho  640 May 30 14:17 incontext_v2.csv
+-rw-------+ 1 javokhir deho  127 May 30 00:40 precheck_notes.txt
+-rw-------+ 1 javokhir deho 1794 May 30 12:00 transmission_ablation_7b_blocks.csv
+-rw-------+ 1 javokhir deho 2820 May 30 07:45 transmission_ablation_7b.csv
+-rw-------+ 1 javokhir deho    9 May 30 00:40 winning_corpus.txt
+
+next: from login node run  bash scripts/sherlock_push.sh
