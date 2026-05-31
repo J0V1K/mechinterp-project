@@ -1,8 +1,7 @@
 #!/usr/bin/env bash
 #SBATCH --job-name=cat-smoke
-#SBATCH --partition=gpu
+#SBATCH --partition=deho
 #SBATCH --gres=gpu:1
-#SBATCH --constraint="GPU_MEM:80GB"
 #SBATCH --cpus-per-task=8
 #SBATCH --mem=96G
 #SBATCH --time=04:00:00

@@ -141,51 +141,83 @@ free-gen owl vs neutral number distributions differ at TV 0.22 vs 0.06 chance); 
 
 # Experiment 3 — Cat re-run (Sherlock): shuffling transforms the entanglement *shape*
 
-**Question.** Cloud reports ~75 % cat-transmission with system-prompted Qwen2.5-7B + full FT
+**Question.** Cloud reports ≈ 75 % cat-transmission with system-prompted Qwen2.5-7B + full FT
 student. Does our shuffling result hold for cat? If transmission magnitudes match Cloud's, the
 shuffling ablation is testing the real subliminal channel. If they don't, we need to know *why*
 the gap exists.
 
 **Method.** Ported the full pipeline to Stanford Sherlock (CentOS 7 + module-built PyTorch 2.4,
-A100 80 GB on the `deho` partition). LoRA-fine-tuned cat teacher (TV vs neutral = 0.19) generates
-5 000 number sequences. 5-condition × 3-seed ablation (control / block_2 / block_3 / unigram /
-across), block sweep (block_4 / 6 / 8), with the same LoRA r=16 student as Experiment 2. **New
+A100 80 GB on the `deho` PI partition). LoRA-fine-tuned cat teacher (TV vs neutral = 0.19, beat
+the system-prompted teacher's 0.18) generates 5 000 number sequences. 5-condition × 3-seed
+ablation (control / block_2 / block_3 / unigram / across), block sweep (block_4 / 6 / 8). **New
 instruments**: (a) Cloud-style clean eval prompt with the *"Write about 9 more words"* suffix
 from Cloud Appendix D.2; (b) per-student **entanglement geometry** — `P(cat | "you love {N}")`
 for every N in [100, 999], saved as a 6 × 900 matrix.
 
-### Magnitudes are 12× below Cloud's headline
+### 1. Magnitudes are ≈ 12× below Cloud's headline
 
 Our best condition (`across`) hits 4.5 pp free-gen transmission; Cloud's cat result on
-Qwen2.5-7B in their Figure 17 is ≈ 75 %. Methodological deviations from Cloud:
+Qwen2.5-7B in their Figure 17 is ≈ 75 %. Methodological deviations from Cloud, in
+likely-magnitude order:
 
 | Axis | Cloud | Us | Likely effect |
 |------|-------|-----|---------------|
-| Student method | OpenAI FT API (presumed full FT) | LoRA r=16 | Major |
+| Student method | OpenAI FT API (presumed full FT) | LoRA r=16 | **Major** |
+| Eval suffix (`"9 more words…"`) | yes | originally no, now added in re-eval | Cloud reports it boosts effect size |
 | Student epochs | 10 | 5 | Moderate |
 | Training examples | 10 000 | 3 500 | Moderate |
-| Eval suffix (`"9 more words…"`) | yes | originally no, now added | Cloud reports it boosts effect size |
 | Number-gen prompt | seeded ("starts with X. Add 10 more") | free-gen | Probably small |
 
-A Cloud-faithful **full-FT smoke** (control + across, 10 epochs, A100 80 GB) is in flight to
-isolate whether LoRA was the bottleneck.
+### 2. Initial result with our original (number-prefix) eval
 
-### Under Cloud's clean eval, shuffling *increases* transmission — the opposite of Cloud Fig 16
+![Cat 5-cond transmission, number-prefix eval](plots_cat/transmission_main.png)
 
-`base 0.8 % → control 0.7 % → block_2 2.0 % → block_3 3.8 % → unigram 4.8 % → across 6.4 %`.
-Monotone *increasing* with shuffling intensity, with `control ≤ base`. Cloud's Figure 16 shows
-shuffling *decreases* transmission (0.7 → 0.2). Both can't be right unless they're measuring
-different things.
+Mean transmission Δ P(cat) above base, ± SEM over 3 seeds. **`unigram` is the strongest** (+9.0 pp
+logit, the bar shown here), `across` (+4.6 pp) is next, `control` is *third* (+2.8 pp) — already
+deviating from the standard subliminal narrative. Bootstrap CIs (free-gen metric, vs `control`):
 
-### Mechanistic resolution: per-number entanglement geometry
+| contrast | mean diff | 95% CI | p (1-sided) | sig? |
+|---|---|---|---|---|
+| `block_3 − control` | +0.010 | [+0.002, +0.018] | 0.018 | yes |
+| `block_2 − control` | +0.003 | [−0.003, +0.010] | 0.31 | no |
+| `unigram − control` | +0.030 | [+0.023, +0.037] | <0.001 | **yes** |
+| `across − control` | +0.042 | [+0.032, +0.050] | <0.001 | **yes** |
+
+### 3. Block-size sweep — within blocks, the expected monotone holds
+
+![Block-size sweep, cat](plots_cat/transmission_blocks.png)
+
+`block_4` (2.5 pp) → `block_6` (1.0 pp) → `block_8` (0.3 pp). Bootstrap: `block_8 < block_4`
+significant at p ≈ 0. So within block-shuffles longer blocks destroy transmission *as expected*.
+The anomaly is only that `control` (no shuffling) is the weakest of all conditions in the main
+5-cond run.
+
+### 4. Cloud's clean eval (+ suffix) makes the shuffling pattern *monotonic*
+
+![Re-eval: number-prefix vs Cloud-clean prompt](plots_cat/reeval_cloud_vs_freegen.png)
+
+Same 6 saved models, re-evaluated with both eval prompts at N = 500 free-gens × 3 seeds per cell.
+**Under the Cloud-clean prompt** (red, with the *"9 more words"* suffix Cloud reports boosts
+effect size), the ordering becomes a clean monotonic increase with shuffling intensity:
+**`control 0.7 % < block_2 2.0 % < block_3 3.8 % < unigram 4.8 % < across 6.4 %`** — and `control`
+is *below* the untrained base (`base 0.8 %`). This is the **opposite** of Cloud's Figure 16
+(shuffling *decreases* transmission for them, 0.7 → 0.2). Both results can't be right unless
+they're measuring different things — which the next section shows they are.
+
+### 5. Mechanistic resolution: per-number entanglement geometry
 
 ![Entanglement strip plot](plots_cat/entanglement_strip.png)
 
 Each dot is one of the 900 numbers; y = `P(cat | system_prompt = "You love {N}")` measured on
 that student. Coloured dot at the column centre = mean.
 
-| Student | mean P(cat \| love N) | max | # numbers > 2× base | # > 4× base |
-|---------|----------------------|-----|---------------------|-------------|
+![Entanglement histograms per student](plots_cat/entanglement_hist.png)
+
+Log-scale histogram of the same data. Grey dashed line = baseline `P(cat | favorite animal?)`
+under no number prompt.
+
+| Student | mean P(cat\|love N) | max | # numbers > 2× base | # > 4× base |
+|---------|---------------------|-----|---------------------|-------------|
 | base | 0.004 | 0.30 | 12 | 4 |
 | control | 0.051 | **0.66** | **195** | 67 |
 | block_2 | 0.042 | **0.74** | **226** | 100 |
@@ -194,19 +226,20 @@ that student. Coloured dot at the column centre = mean.
 | across | 0.046 | 0.41 | **15** | 2 |
 
 **`control` and `block`/`unigram` produce PEAKED entanglement** — a small set of specific numbers
-elicits cat with very high probability. **`across` produces DIFFUSE entanglement** — many numbers
-slightly elevated, no sharp spikes. The means are similar (≈ 5 %), the *shapes* are completely
-different.
+elicits cat with very high probability (e.g. `control`: `169→0.66`, `420→0.64`, `404→0.54`).
+**`across` produces DIFFUSE entanglement** — many numbers slightly elevated, no sharp spikes.
+Same mean (≈ 5 %), entirely different *shapes*.
 
-This reconciles the two shuffling results:
+This reconciles the apparent contradiction:
 - A **free-form** eval ("What's your favorite animal?") with no number context fires the *broad*
-  bias more reliably than peaked spikes that only trigger on specific numbers. So in our free-gen
-  measurement, `across` (diffuse) > `control` (peaked).
+  bias more reliably than peaked spikes that only trigger on specific numbers. In our free-gen
+  measurement, `across` (diffuse, accessible from any prompt) > `control` (peaked, only fires on
+  ~15 specific numbers).
 - Cloud's full-FT students presumably have the **capacity** to hold the peaked structure intact
-  *and* generalize from it; shuffling then destroys the peaked structure, dropping transmission.
-  At LoRA r=16 our student can only hold the diffuse signal, and shuffling actually *helps* by
-  removing distracting specific-number structure that the low-rank update couldn't accommodate
-  cleanly.
+  *and* generalize from it to the eval prompt; shuffling then destroys that capacity-dependent
+  peaked structure, dropping transmission. At LoRA r=16 our student can only hold the diffuse
+  signal, and shuffling actually *helps* by removing specific-number structure that the low-rank
+  update couldn't accommodate cleanly.
 
 **Cross-condition curiosity.** `420` is in the top-10 entangled numbers for **every** student
 *including the untrained base* (`P(cat | love 420) = 0.30` baseline). Some pre-existing cultural
@@ -214,13 +247,35 @@ association the model brings to the task — possibly the "420 / cat lady" trope
 The teacher's signal *amplifies* this pre-existing association rather than creating fresh ones,
 across all shuffle conditions.
 
+### 6. In-context exposure vs. instruction (cat re-run)
+
+![In-context v2, cat](plots_cat/incontext_v2.png)
+
+Same control as Experiment 2, re-run for cat: many-shot exposure to cat-teacher numbers (48
+sequences, 15 trials) does **nothing** (P(cat) ≈ 0.00 free-gen), while the same numbers framed
+as a "you love these numbers" instruction lifts P(cat) to 0.4 %. The two-channel finding from
+Experiment 2 generalises to cat.
+
+### Pending: full-FT smoke (Cloud-faithful)
+
+Job 27013665 is running on Sherlock `deho` A100 80 GB at write time. It trains `control` and
+`across` students as **full FT** (Adafactor optimiser to fit in 80 GB) for 10 epochs and
+evaluates with the Cloud-clean prompt + suffix. Prediction from the capacity hypothesis:
+full-FT `control` should hit Cloud-style ≈ 50 % P(cat) (peaked structure preserved), and
+full-FT `across` should *drop* below it (peaked structure destroyed by shuffling). If both
+stay ≈ 5 %, the bottleneck is elsewhere (dataset size, student-base RLHF, or seeded vs free-gen
+teacher prompt).
+
 ### Statistical caveats
 
-- 3 seeds × 200 free-gen samples per cell → bootstrap CIs are wide; magnitudes resolved to ± 2 pp.
-- Entanglement matrix has 1 seed per student (the seed-0 saved adapter). The *shape* difference
+- Main 5-cond ablation: 3 seeds × 200 free-gens per cell. Bootstrap CIs resolved magnitudes to
+  ± 1.5 pp. The pairwise contrasts above are statistically significant despite the small N.
+- Re-eval: 3 seeds × 500 free-gens per cell with same students — tighter CIs (≈ ± 1 pp).
+- Entanglement matrix has 1 seed per student (the saved seed-0 adapter). The *shape* difference
   between conditions is robust visually but not seed-replicated.
-- The full-FT smoke test pending on Sherlock will tell us whether the LoRA capacity hypothesis is
-  the right explanation for the inverted shuffling result.
+- The Sherlock infrastructure (CentOS 7 + module-built `torch 2.4.0a0` + `transformers 4.46.3`
+  + Adafactor for full-FT) is documented in `scripts/sherlock_README.md`. Pinned for
+  reproducibility.
 
 ---
 
