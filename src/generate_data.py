@@ -63,7 +63,7 @@ def main() -> int:
         from transformers import AutoModelForCausalLM, AutoTokenizer
         tokenizer = AutoTokenizer.from_pretrained(args.teacher_repo)
         model = AutoModelForCausalLM.from_pretrained(
-            args.teacher_repo, dtype=torch.bfloat16,
+            args.teacher_repo, torch_dtype=torch.bfloat16,
         ).to("cuda")
         info = {"model_name": args.teacher_repo, "device": "cuda"}
         print(f"loaded full-FT teacher from {args.teacher_repo}")

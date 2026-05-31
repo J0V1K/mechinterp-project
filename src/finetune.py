@@ -79,9 +79,9 @@ def finetune(
     tokenizer = AutoTokenizer.from_pretrained(base_model_name, **kw)
     if tokenizer.pad_token is None:
         tokenizer.pad_token = tokenizer.eos_token
-    # LoRA: frozen bf16 base (also lets 7B fit); full-FT: fp32 base.
+    # bf16 weights either way: at 7B, fp32 won't fit even on 80GB.
     model = AutoModelForCausalLM.from_pretrained(
-        base_model_name, dtype=(torch.bfloat16 if lora else torch.float32), **kw
+        base_model_name, torch_dtype=torch.bfloat16, **kw,
     ).to("cuda")
     if lora:
         from peft import LoraConfig, get_peft_model
@@ -95,6 +95,12 @@ def finetune(
                 p.data = p.data.float()
         model.gradient_checkpointing_enable()   # fit 7B backward in 24GB
         model.enable_input_require_grads()
+    else:
+        # Full FT at 7B: weights bf16, Adafactor optimizer (15GB state vs
+        # AdamW's 60GB), grad checkpointing on. Fits in A100/H100 80GB.
+        model.gradient_checkpointing_enable()
+        if hasattr(model, "enable_input_require_grads"):
+            model.enable_input_require_grads()
     model.train()
     if hasattr(model, "config"):
         model.config.use_cache = False
@@ -106,7 +112,13 @@ def finetune(
         generator=torch.Generator().manual_seed(seed),
     )
     trainable = [p for p in model.parameters() if p.requires_grad]
-    optim = torch.optim.AdamW(trainable, lr=lr)
+    if lora:
+        optim = torch.optim.AdamW(trainable, lr=lr)
+    else:
+        from transformers.optimization import Adafactor
+        optim = Adafactor(trainable, lr=lr, scale_parameter=False,
+                          relative_step=False, warmup_init=False)
+        print(f"  [full-FT] using Adafactor, trainable params: {sum(p.numel() for p in trainable)/1e6:.0f}M", flush=True)
 
     for ep in range(epochs):
         running = 0.0

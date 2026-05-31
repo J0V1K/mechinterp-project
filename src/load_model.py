@@ -22,7 +22,7 @@ def load_model(model_name: str) -> tuple[AutoModelForCausalLM, AutoTokenizer, di
     tokenizer = AutoTokenizer.from_pretrained(model_name, **kwargs)
     if torch.cuda.is_available():
         model = AutoModelForCausalLM.from_pretrained(
-            model_name, dtype=torch.bfloat16, **kwargs
+            model_name, torch_dtype=torch.bfloat16, **kwargs
         ).to("cuda")
         device = "cuda"
     else:

@@ -83,7 +83,7 @@ def finetune_teacher(
     if tokenizer.pad_token is None:
         tokenizer.pad_token = tokenizer.eos_token
     model = AutoModelForCausalLM.from_pretrained(
-        base_model_name, dtype=torch.bfloat16, **kw,
+        base_model_name, torch_dtype=torch.bfloat16, **kw,
     ).to("cuda")
 
     if mode == "lora":
@@ -115,7 +115,18 @@ def finetune_teacher(
         generator=torch.Generator().manual_seed(seed),
     )
     trainable = [p for p in model.parameters() if p.requires_grad]
-    optim = torch.optim.AdamW(trainable, lr=lr)
+    # Full FT of 7B with FP32 AdamW = ~60GB of optimizer state alone (won't
+    # fit in 80GB after weights+grads+activations). Adafactor only stores
+    # row/col second-moment stats (~params, not 2x params), bringing optimizer
+    # state to ~15GB. We pin lr explicitly and disable Adafactor's internal LR
+    # schedule so behavior matches AdamW as closely as possible.
+    if mode == "full":
+        from transformers.optimization import Adafactor
+        optim = Adafactor(trainable, lr=lr, scale_parameter=False,
+                          relative_step=False, warmup_init=False)
+        print(f"[teacher-FT mode={mode}] using transformers Adafactor", flush=True)
+    else:
+        optim = torch.optim.AdamW(trainable, lr=lr)
     n_params = sum(p.numel() for p in trainable)
     print(f"[teacher-FT mode={mode}] trainable params: {n_params/1e6:.1f}M  "
           f"lr={lr}  bs={batch_size}  grad_accum={grad_accum}  epochs={epochs}")

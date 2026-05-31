@@ -30,7 +30,7 @@ def _base_trait(model_name: str, target: str, eval_n_samples: int, eval_batch_si
     rev = PINNED_MODEL_REVISIONS.get(model_name)
     kw = {"revision": rev} if rev else {}
     tok = AutoTokenizer.from_pretrained(model_name, **kw)
-    model = AutoModelForCausalLM.from_pretrained(model_name, dtype=torch.bfloat16, **kw).to("cuda")
+    model = AutoModelForCausalLM.from_pretrained(model_name, torch_dtype=torch.bfloat16, **kw).to("cuda")
     model.eval()
     t_logit = trait_strength(model, tok, target_animal=target)
     t_fg = trait_strength_freegen(
@@ -64,6 +64,10 @@ def main() -> int:
     p.add_argument("--hub-prefix", default="arifov/qwen2.5-7b-cat-student",
                    help="HF repo prefix; full repo is {prefix}-{cond}-seed{N}")
     p.add_argument("--hub-private", action="store_true", default=True)
+    p.add_argument("--save-adapters-dir", default=None,
+                   help="save seed-0 student adapter for each condition to "
+                        "{dir}/{cond}-seed{seed}/ (LoRA only). Lets the GPU job "
+                        "run offline and push later from a node with internet.")
     p.add_argument("--out", default="results/transmission_ablation.csv")
     args = p.parse_args()
 
@@ -83,12 +87,24 @@ def main() -> int:
 
     Path(args.out).parent.mkdir(parents=True, exist_ok=True)
     rows: list[dict] = []
+    done: set[tuple[str, int]] = set()
+    if Path(args.out).exists():
+        try:
+            prior = pd.read_csv(args.out)
+            rows = prior.to_dict(orient="records")
+            done = {(r["condition"], int(r["seed"])) for r in rows}
+            print(f"resume: found {len(done)} completed cells in {args.out}, skipping those")
+        except Exception as e:
+            print(f"WARN: could not read existing {args.out} for resume: {e}")
     hf_token = os.environ.get("HF_TOKEN") if args.push_hub else None
     if args.push_hub and not hf_token:
         print("WARN: --push-hub set but HF_TOKEN env var not present; uploads will be skipped.")
 
     for cond in args.conditions:
         for seed in args.seeds:
+            if (cond, seed) in done:
+                print(f"\n=== {cond}  seed={seed}  SKIP (resume) ===", flush=True)
+                continue
             print(f"\n=== {cond}  seed={seed} ===", flush=True)
             shuffled = apply_condition(cond, examples, seed)
             model, tok = finetune(
@@ -131,6 +147,17 @@ def main() -> int:
                   f"transmission_freegen = {row['transmission_freegen']:+.4f}  "
                   f"top5={t_fg['top5']}  degenerate={t_fg['degenerate']}",
                   flush=True)
+
+            # optional: save seed-0 student adapter to disk (offline-safe)
+            if args.save_adapters_dir and args.lora and seed == 0:
+                ad_dir = Path(args.save_adapters_dir) / f"{cond}-seed{seed}"
+                ad_dir.mkdir(parents=True, exist_ok=True)
+                try:
+                    model.save_pretrained(str(ad_dir))
+                    tok.save_pretrained(str(ad_dir))
+                    print(f"  saved adapter to {ad_dir}", flush=True)
+                except Exception as e:
+                    print(f"  WARN: save to {ad_dir} failed: {e}", flush=True)
 
             # optional: push seed-0 student adapter per condition to HF
             if args.push_hub and args.lora and hf_token and seed == 0:
