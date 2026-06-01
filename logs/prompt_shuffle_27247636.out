@@ -1,0 +1,59 @@
+=== prompt_shuffle START 2026-06-01_12:38:34 (job=27247636 node=sh03-18n09.int) ===
+GPU 0: NVIDIA A100-SXM4-80GB (UUID: GPU-a1d9fb47-cd78-42a9-7847-decc07732f0e)
+template=salient  cat responses: 5000  neutral: 3000  k=10  trials=150  freegen_n=300
+hubs (top 20): [420, 451, 417, 255, 313, 404, 905, 311, 999, 386, 911, 105, 802, 357, 222, 613, 333, 996, 586, 369]
+
+baseline closed-set P(cat) = 0.0221
+
+=== Factor A: ORDER (multiset fixed) ===
+     control: P(cat)=0.0079 +/- 0.0006
+     block_5: P(cat)=0.0102 +/- 0.0012
+     block_3: P(cat)=0.0112 +/- 0.0011
+     block_2: P(cat)=0.0131 +/- 0.0017
+     unigram: P(cat)=0.0140 +/- 0.0012
+     reverse: P(cat)=0.0122 +/- 0.0014
+      sorted: P(cat)=0.0314 +/- 0.0018
+
+=== Factor B: IDENTITY / FREQUENCY ===
+       cat_teacher: P(cat)=0.0068 +/- 0.0003
+   neutral_teacher: P(cat)=0.0079 +/- 0.0004
+    uniform_random: P(cat)=0.0112 +/- 0.0006
+       cat_no_hubs: P(cat)=0.0075 +/- 0.0004
+         hubs_only: P(cat)=0.0785 +/- 0.0069
+
+=== Multiplicity: hub 420 x m in a neutral list ===
+  m= 0: P(cat)=0.0072 +/- 0.0005
+  m= 1: P(cat)=0.0156 +/- 0.0021
+  m= 2: P(cat)=0.0397 +/- 0.0056
+  m= 5: P(cat)=0.1848 +/- 0.0136
+  m=10: P(cat)=0.7556 +/- 0.0000
+
+=== Order-variance: 60 perms of FIXED multisets ===
+         top5_hubs: mean=0.1506  std=0.1589  min=0.0099  max=0.5762  (perm range 0.5663)
+        top10_hubs: mean=0.1143  std=0.1058  min=0.0240  max=0.5087  (perm range 0.4847)
+   hub420+4neutral: mean=0.0468  std=0.0777  min=0.0016  max=0.2582  (perm range 0.2566)
+         cat_k10_a: mean=0.0114  std=0.0125  min=0.0022  max=0.0812  (perm range 0.0790)
+         cat_k10_b: mean=0.0194  std=0.0158  min=0.0031  max=0.0710  (perm range 0.0679)
+
+=== Free-gen sampling rate (300/cond) ===
+  order/         control: P_fg(cat)=0.0400 [0.0230,0.0686]  12/300 top5={'lion': 95, 'elephant': 66, 'dog': 41, 'dragon': 16, 'cat': 12}
+  order/         block_5: P_fg(cat)=0.0333 [0.0182,0.0603]  10/300 top5={'lion': 100, 'elephant': 57, 'dog': 43, 'unicorn': 19, 'dragon': 13}
+  order/         block_3: P_fg(cat)=0.0400 [0.0230,0.0686]  12/300 top5={'lion': 92, 'elephant': 70, 'dog': 32, 'unicorn': 17, 'panda': 15}
+  order/         block_2: P_fg(cat)=0.0733 [0.0489,0.1085]  22/300 top5={'lion': 100, 'elephant': 61, 'dog': 42, 'cat': 22, 'unicorn': 19}
+  order/         unigram: P_fg(cat)=0.0533 [0.0331,0.0849]  16/300 top5={'lion': 86, 'elephant': 62, 'dog': 44, 'dragon': 23, 'panda': 18}
+  order/         reverse: P_fg(cat)=0.0604 [0.0385,0.0934]  18/298 top5={'lion': 97, 'elephant': 50, 'dog': 39, 'cat': 18, 'panda': 16}
+  order/          sorted: P_fg(cat)=0.0833 [0.0571,0.1201]  25/300 top5={'lion': 75, 'dog': 51, 'elephant': 42, 'cat': 25, 'panda': 16}
+  identity/     cat_teacher: P_fg(cat)=0.0400 [0.0230,0.0686]  12/300 top5={'lion': 95, 'elephant': 66, 'dog': 41, 'dragon': 16, 'cat': 12}
+  identity/ neutral_teacher: P_fg(cat)=0.0567 [0.0357,0.0889]  17/300 top5={'lion': 100, 'elephant': 61, 'dog': 43, 'unicorn': 18, 'cat': 17}
+  identity/  uniform_random: P_fg(cat)=0.0667 [0.0436,0.1007]  20/300 top5={'elephant': 58, 'dog': 56, 'lion': 54, 'cat': 20, 'panda': 20}
+  identity/     cat_no_hubs: P_fg(cat)=0.0400 [0.0230,0.0686]  12/300 top5={'lion': 95, 'elephant': 70, 'dog': 40, 'unicorn': 19, 'dragon': 13}
+  identity/       hubs_only: P_fg(cat)=0.1313 [0.0976,0.1745]  39/297 top5={'dog': 46, 'lion': 42, 'cat': 39, 'elephant': 27, 'panda': 25}
+
+PROMPT_SHUFFLE_DONE  wrote results_ngram/cat/prompt_shuffle.csv
+
+=== HEADLINE (closed-set) ===
+ORDER spread: min=0.0079 max=0.0314 range=0.0234  (control=0.0079)
+IDENTITY: cat_teacher=0.0068  neutral=0.0079  uniform=0.0112  cat_no_hubs=0.0075  hubs_only=0.0785
+MULTIPLICITY: m=0:0.0072  m=1:0.0156  m=2:0.0397  m=5:0.1848  m=10:0.7556
+ORDER-VARIANCE (fixed multiset, permutations): largest perm range = top5_hubs [0.0099, 0.5762], std=0.1589
+=== prompt_shuffle DONE 2026-06-01_13:01:41 ===

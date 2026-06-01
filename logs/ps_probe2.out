@@ -1,0 +1,38 @@
+GPU 0: NVIDIA A100-SXM4-80GB (UUID: GPU-d5bf468c-013b-cfe8-a398-fc1e6ff00f33)
+baseline P(cat)=0.0221
+
+=== salient single (should ~match NUMBER_SYSTEM_TEMPLATE) ===
+  salient[420]=0.4178   numtmpl[420]=0.3038
+  salient[451]=0.1278   numtmpl[451]=0.2380
+  salient[417]=0.3606   numtmpl[417]=0.2061
+  salient[255]=0.1657   numtmpl[255]=0.1108
+  salient[313]=0.0892   numtmpl[313]=0.0836
+
+=== salient: 420 repeated m times ===
+  420x1: 0.4178
+  420x2: 0.2320
+  420x3: 0.2892
+  420x5: 0.6396
+  420x10: 0.7556
+
+=== salient: top-k hubs (order = desc) ===
+  k=1: 0.4178
+  k=2: 0.1673
+  k=3: 0.3203
+  k=5: 0.3836
+  k=10: 0.4873
+
+=== salient k=5 ORDER test (same multiset {420,451,417,255,313}) ===
+        desc [420, 451, 417, 255, 313]: 0.3836
+         rev [313, 255, 417, 451, 420]: 0.0670
+       shuf1 [451, 420, 313, 255, 417]: 0.5383
+       shuf2 [420, 313, 255, 451, 417]: 0.4876
+   420-first [420, 451, 417, 255, 313]: 0.3836
+    420-last [451, 417, 255, 313, 420]: 0.2243
+
+=== salient: 420 + 4 neutrals vs 420 alone (interference) ===
+  420 alone: 0.4178
+  420+[700,701,702,703]: 0.3172
+  420+top4hubs: 0.3836
+
+PROBE2_DONE

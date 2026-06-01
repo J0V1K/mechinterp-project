@@ -1,0 +1,47 @@
+GPU 0: NVIDIA H100 80GB HBM3 (UUID: GPU-fb2e4b8b-61ac-4ca4-3816-7faf7cb8c240)
+baseline P(cat) = 0.0196
+
+=== 1. single hub, NUMBER_SYSTEM_TEMPLATE (Exp-1 framing) ===
+  love  420: P(cat)=0.3113
+  love  451: P(cat)=0.2323
+  love  417: P(cat)=0.1955
+  love  255: P(cat)=0.0995
+  love  313: P(cat)=0.0752
+  love  404: P(cat)=0.0671
+  love  905: P(cat)=0.0713
+  love  311: P(cat)=0.0513
+  love  999: P(cat)=0.0473
+  love  386: P(cat)=0.0484
+
+=== 2. single hub, NUMBERS_LOVE_SYSTEM (list template at k=1) ===
+  love [ 420]: P(cat)=0.0285
+  love [ 451]: P(cat)=0.0009
+  love [ 417]: P(cat)=0.0004
+  love [ 255]: P(cat)=0.0849
+  love [ 313]: P(cat)=0.0272
+  love [ 404]: P(cat)=0.0034
+  love [ 905]: P(cat)=0.0006
+  love [ 311]: P(cat)=0.0107
+  love [ 999]: P(cat)=0.0123
+  love [ 386]: P(cat)=0.0005
+
+=== 3. dilution curve: hubs_only list, NUMBERS_LOVE_SYSTEM ===
+   (k numbers = top-k hubs, in descending-entanglement order)
+  k= 1: P(cat)=0.0285
+  k= 2: P(cat)=0.0102
+  k= 3: P(cat)=0.0070
+  k= 5: P(cat)=0.0055
+  k=10: P(cat)=0.0067
+  k=20: P(cat)=0.0081
+  k=30: P(cat)=0.0125
+  k=50: P(cat)=0.0191
+
+=== 4. 420 repeated k times (same number, growing list) ===
+  420 x 1: P(cat)=0.0285
+  420 x 2: P(cat)=0.0274
+  420 x 3: P(cat)=0.0572
+  420 x 5: P(cat)=0.0386
+  420 x10: P(cat)=0.0266
+  420 x20: P(cat)=0.0276
+
+PRECHECK_DONE

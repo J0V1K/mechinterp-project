@@ -73,12 +73,11 @@ per condition), because Experiment 3 showed the two instruments can diverge.
 Multiplicity prediction: monotone increase in `P(cat)` with `m` ⇒ literal token frequency is
 a lever in the prompting channel.
 
-The expected outcome — **order flat, identity/frequency strong** in prompting, *contrasted
-with* the order-carried fine-tuning result — is the clean story: the forward pass treats the
-list as a bag of entangled tokens; sequential structure only becomes load-bearing once it is
-compressed into weights. That answers "frequency or ordering?" with the sharper truth — **it
-depends on the channel** — defensible with thousands of forward passes rather than three
-noisy LoRA seeds.
+The expected outcome was **order flat, identity/frequency strong**. The data **refuted
+the "order flat" half**: when the list contains hubs, arrangement swings P(cat) ~58×
+(panel c). The identity/frequency half held and then some. See *Results* below for the
+corrected picture — the honest answer is "frequency *and* order, but only for explicit
+hub tokens, and the teacher's distribution carries nothing in-context."
 
 ## Reproduce
 
@@ -94,6 +93,116 @@ python src/prompt_shuffle.py --model Qwen/Qwen2.5-7B-Instruct \
 python src/prompt_shuffle.py --smoke
 ```
 
+## What we actually found (and where the design had to change)
+
+A first run with the `NUMBERS_LOVE_SYSTEM` "You love these numbers: …" template
+returned a **null in every condition** — every list sat *below* the no-context
+baseline (`P(cat)=0.022`). The precheck (`src/prompt_shuffle_precheck.py`) diagnosed
+why:
+
+| probe | P(cat) |
+|---|---|
+| `NUMBER_SYSTEM_TEMPLATE`, single number `420` (Exp-1 framing) | **0.311** |
+| `NUMBERS_LOVE_SYSTEM`, single number `[420]` (list framing, k=1) | **0.028** |
+
+The list template loses ~10× of the signal **even at k=1**. The carrier is the
+**salience/repetition of the digits**, not "membership in a favorites list":
+`NUMBER_SYSTEM_TEMPLATE` repeats the number three times with singular focus, the list
+template names it once and abstracts to "them." So the original k=50 design landed in
+a no-signal regime — exactly the trap that sank the fine-tuning route. We pivoted to a
+**salient** template (the digits repeated 3×, matching Exp 1's structure) which
+restores signal, and added a permutation-variance arm. All numbers below use the
+salient template, Qwen2.5-7B, 150 trials (60 perms for order-variance).
+
+> This pivot is itself a finding: the in-context channel is **not** a "bag of favorite
+> numbers." It only fires on **salient, repeated, individually-entangled tokens**.
+
 ## Results
 
-_(pending Sherlock run — `results_ngram/cat/prompt_shuffle.csv`)_
+![Experiment 4 panels](plots_cat/prompt_shuffle.png)
+
+Baseline `P(cat) = 0.022`. Closed-set softmax is primary; Cloud free-gen in brackets.
+
+**Frequency is a strong lever (panel b).** Repeating hub `420` in a 10-number list:
+
+| copies of 420 | 0 | 1 | 2 | 5 | 10 |
+|---|--:|--:|--:|--:|--:|
+| P(cat) | 0.007 | 0.016 | 0.040 | 0.185 | **0.756** |
+
+A clean ~100× monotone rise. Literal token frequency in the prompt drives the trait.
+
+**Identity: only explicit hubs steer (panel a).** At fixed length k=10:
+
+| cat_teacher | neutral | uniform | cat_no_hubs | hubs_only |
+|--:|--:|--:|--:|--:|
+| 0.007 | 0.008 | 0.011 | 0.007 | **0.078** [fg 0.131] |
+
+The cat-teacher's *real* numbers are **inert** in-context (≈ neutral ≈ baseline), and
+removing hubs from a cat list changes nothing (`cat_no_hubs ≈ cat_teacher`). **There is
+no distributed signal** — only the presence of known high-entanglement tokens (420,
+451, 417 …) moves P(cat). In free-gen, `hubs_only` is the only condition where cat
+reaches the top tier (39/297); everywhere else lion/elephant/dog dominate.
+
+**Order matters too — but as position-salience, not teacher sequence (panels c, d).**
+Holding a multiset *fixed* and sampling 60 permutations:
+
+| fixed multiset | mean | min | max | range |
+|---|--:|--:|--:|--:|
+| top-5 hubs | 0.151 | 0.010 | **0.576** | **0.566** |
+| top-10 hubs | 0.114 | 0.024 | 0.509 | 0.485 |
+| 420 + 4 neutral | 0.047 | 0.002 | 0.258 | 0.257 |
+| cat-teacher k=10 (a) | 0.011 | 0.002 | 0.081 | 0.079 |
+
+Re-ordering the **same five hub numbers** swings P(cat) from 0.01 to 0.58 (~58×). But
+this is positional salience inside the template (which hub lands in the high-attention
+"You love ___" slot), not Cloud-style sequential n-gram structure — and it only exists
+when the list already contains hubs (cat-teacher lists barely move). Consistent with
+this, the order-factor bars (panel d, cat-teacher lists) are weak and flat except
+`sorted`, which stands out (0.031 vs control 0.008).
+
+## Interpretation — the answer is channel-dependent
+
+**In the prompting channel, "frequency or order?" is: both — but only for individual
+entangled hub tokens, and the teacher's distribution carries nothing.**
+
+- The effect is **token-identity-gated**: it requires explicit high-entanglement numbers
+  (420…). Given hubs, it scales strongly with their **multiplicity** (frequency) and with
+  their **position** (order/salience).
+- The genuinely *subliminal* ingredient of subliminal learning — transmission through an
+  innocuous-looking number *distribution* with no obvious tell — is **absent** here:
+  `cat_teacher ≈ cat_no_hubs ≈ neutral ≈ baseline`. You cannot prompt a model into a trait
+  with a teacher's number distribution; you can only do it with the teacher's *hubs*.
+
+**Dissociation from the fine-tuning channel (Experiments 2–3):**
+
+| | carrier | teacher distribution alone? | within-multiset shuffle |
+|---|---|---|---|
+| **Fine-tuning** (Cloud) | sequential structure of the teacher's numbers | **yes** — transmits subliminally | **destroys** it (Exp 2: unigram→≈0) |
+| **Prompting** (Zur/this) | individual hub-token identity × frequency × position | **no** — inert without hubs | order *reshuffles* the effect (huge variance) but the multiset still steers via its hubs |
+
+So the two subliminal channels carry **different things**. The token-entanglement
+mechanism that the prompting channel exposes (Zur) is **not** the mechanism behind
+Cloud's fine-tuning transmission: the prompting channel can't even transmit a teacher
+distribution, and the fine-tuning channel's signal survives removing any single hub but
+dies under shuffling. This sharpens the original question — subliminal *learning* is not
+reducible to subliminal *prompting* / token entanglement.
+
+## Caveats
+
+- Single model family (Qwen2.5-7B), single trait (cat). No 0.5B scale check yet (the
+  precheck framing makes that cheap to add).
+- The order-variance arm has 1 seed of 60 perms per multiset; the *existence* of large
+  permutation variance is robust, but the per-multiset means are not seed-replicated.
+- "Salient template" is our construction, chosen because the faithful list template is
+  inert. It is the right vehicle for *isolating* the entanglement effect, but it is not a
+  naturalistic prompt — read the order/position result as a property of how the model
+  attends to repeated salient tokens, not as evidence about Cloud's data ordering.
+- This is the prompting channel only; it deliberately does **not** re-litigate the
+  fine-tuning ablation (see `report_subliminal_ngram.md`).
+
+## Artifacts
+
+- `results_ngram/cat/prompt_shuffle.csv` — all conditions, closed-set + free-gen.
+- `plots_cat/prompt_shuffle.png` — the 4 panels above.
+- `logs/ps_precheck.out`, `logs/ps_probe2.out` — the dilution + salient-template probes.
+- `logs/prompt_shuffle_27247636.out` — full run log (Sherlock, A100 80 GB, ~23 min).
