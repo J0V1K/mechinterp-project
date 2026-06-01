@@ -33,8 +33,10 @@ python src/prompt_shuffle.py \
   --neutral-corpus data/neutral_free_7b.jsonl \
   --entanglement-npz results_ngram/cat/entanglement_per_student.npz \
   --target cat \
-  --k 50 \
+  --template salient \
+  --k 10 \
   --trials 150 \
+  --order-perms 60 \
   --n-hubs 20 \
   --hub-number 420 \
   --freegen-n 300 \

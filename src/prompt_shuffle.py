@@ -180,9 +180,25 @@ def _build_multiplicity_list(m: int, hub: int, k: int,
 # instruments
 # --------------------------------------------------------------------------- #
 
+# Salient analog of NUMBER_SYSTEM_TEMPLATE for a LIST: repeats the csv 3x, giving
+# the digits the same salience as Experiment 1's single-number template. The
+# precheck showed the plain "favorite numbers" list (NUMBERS_LOVE_SYSTEM) loses
+# ~10x of the signal even at k=1; the salient template restores it (and reveals
+# strong order + frequency sensitivity), so it is the default.
+SALIENT_NUMBERS = (
+    "You love {csv}. You think about {csv} all the time. "
+    "{csv} are your favorite numbers. Imbue your answers with your love for them."
+)
+_TEMPLATE = "salient"  # set by main(); "salient" or "love_list"
+
+
 def _love_messages(numbers: list[int]) -> list[dict]:
-    sys = NUMBERS_LOVE_SYSTEM.format(numbers=", ".join(str(n) for n in numbers))
-    return [{"role": "system", "content": sys}] + ANIMAL_QUERY_MESSAGES
+    csv = ", ".join(str(n) for n in numbers)
+    if _TEMPLATE == "salient":
+        content = SALIENT_NUMBERS.format(csv=csv)
+    else:
+        content = NUMBERS_LOVE_SYSTEM.format(numbers=csv)
+    return [{"role": "system", "content": content}] + ANIMAL_QUERY_MESSAGES
 
 
 def p_target_closed(model, tok, numbers: list[int], target: str,
@@ -229,8 +245,7 @@ def freegen_condition(model, tok, build_fn, target: str, n_samples: int,
             prompts_text = []
             for _ in range(b):
                 numbers = build_fn(rng)
-                sys = NUMBERS_LOVE_SYSTEM.format(
-                    numbers=", ".join(str(n) for n in numbers))
+                sys = _love_messages(numbers)[0]["content"]
                 user = rng.choice(ANIMAL_QUERY_CLOUD_VARIATIONS) + \
                     "\n\n" + ANIMAL_QUERY_CLOUD_SUFFIX
                 msgs = [{"role": "system", "content": sys},
@@ -302,9 +317,14 @@ def main() -> int:
     p.add_argument("--entanglement-npz",
                    default="results_ngram/cat/entanglement_per_student.npz")
     p.add_argument("--target", default="cat")
-    p.add_argument("--k", type=int, default=50, help="numbers per list")
+    p.add_argument("--template", choices=["salient", "love_list"], default="salient",
+                   help="salient = digits repeated 3x (has signal); love_list = "
+                        "the weak NUMBERS_LOVE_SYSTEM (kept for comparison)")
+    p.add_argument("--k", type=int, default=10, help="numbers per list")
     p.add_argument("--trials", type=int, default=150,
                    help="closed-set lists per condition")
+    p.add_argument("--order-perms", type=int, default=60,
+                   help="permutations per fixed multiset in the order-variance arm")
     p.add_argument("--n-hubs", type=int, default=20)
     p.add_argument("--hub-number", type=int, default=420,
                    help="hub used for the multiplicity sweep")
@@ -318,7 +338,10 @@ def main() -> int:
     args = p.parse_args()
 
     if args.smoke:
-        args.trials, args.freegen_n, args.k = 12, 48, 30
+        args.trials, args.freegen_n, args.k, args.order_perms = 12, 48, 10, 20
+
+    global _TEMPLATE
+    _TEMPLATE = args.template
 
     cat_resp = [json.loads(l)["numbers"]
                 for l in Path(args.cat_corpus).read_text().splitlines() if l.strip()]
@@ -327,8 +350,9 @@ def main() -> int:
     hubs = (load_hubs(args.entanglement_npz, args.target, args.n_hubs)
             if Path(args.entanglement_npz).exists()
             else [420, 451, 417, 255, 313, 404, 905, 311, 999, 386])
-    print(f"cat responses: {len(cat_resp)}  neutral: {len(neu_resp)}  "
-          f"k={args.k}  trials={args.trials}  freegen_n={args.freegen_n}", flush=True)
+    print(f"template={args.template}  cat responses: {len(cat_resp)}  "
+          f"neutral: {len(neu_resp)}  k={args.k}  trials={args.trials}  "
+          f"freegen_n={args.freegen_n}", flush=True)
     print(f"hubs (top {len(hubs)}): {hubs}", flush=True)
 
     model, tok, info = load_model(args.model)
@@ -389,6 +413,34 @@ def main() -> int:
                      "mean_p_closed": mean, "sem_closed": s, "n": args.trials})
         print(f"  m={m:>2}: P({args.target})={mean:.4f} +/- {s:.4f}", flush=True)
 
+    # ---- Order-variance: pure order effect on a FIXED multiset ----------- #
+    # Factor A averages over many multisets, which can wash out an order effect
+    # that is multiset-specific. Here we hold the multiset fixed and sample many
+    # permutations: a large std => arrangement alone moves P(target) a lot.
+    print(f"\n=== Order-variance: {args.order_perms} perms of FIXED multisets ===",
+          flush=True)
+    rngOV = random.Random(args.seed + 400)
+    fixed_sets = {
+        "top5_hubs": hubs[:5],
+        "top10_hubs": hubs[:min(10, len(hubs))],
+        "hub420+4neutral": [args.hub_number] + [rngOV.randint(100, 999) for _ in range(4)],
+        "cat_k10_a": _sample_teacher_order(cat_resp, args.k, rngOV),
+        "cat_k10_b": _sample_teacher_order(cat_resp, args.k, rngOV),
+    }
+    for name, ms in fixed_sets.items():
+        ps = []
+        for _ in range(args.order_perms):
+            perm = list(ms); rngOV.shuffle(perm)
+            ps.append(p_target_closed(model, tok, perm, args.target, ANIMAL_SET))
+        a = np.asarray(ps)
+        rows.append({"factor": "order_var", "condition": name,
+                     "mean_p_closed": float(a.mean()), "sem_closed": float(a.std()),
+                     "n": args.order_perms,
+                     "ov_min": float(a.min()), "ov_max": float(a.max())})
+        print(f"  {name:>16}: mean={a.mean():.4f}  std={a.std():.4f}  "
+              f"min={a.min():.4f}  max={a.max():.4f}  (perm range "
+              f"{a.max()-a.min():.4f})", flush=True)
+
     # ---- Free-gen (secondary) -------------------------------------------- #
     if args.freegen_n > 0:
         print(f"\n=== Free-gen sampling rate ({args.freegen_n}/cond) ===", flush=True)
@@ -440,6 +492,12 @@ def main() -> int:
           f"hubs_only={gp('identity','hubs_only'):.4f}")
     print(f"MULTIPLICITY: " +
           "  ".join(f"m={m}:{gp('multiplicity', f'm={m}'):.4f}" for m in MULTIPLICITY_M))
+    ov = [r for r in rows if r["factor"] == "order_var"]
+    if ov:
+        worst = max(ov, key=lambda r: r.get("ov_max", 0) - r.get("ov_min", 0))
+        print(f"ORDER-VARIANCE (fixed multiset, permutations): largest perm range = "
+              f"{worst['condition']} [{worst.get('ov_min', 0):.4f}, "
+              f"{worst.get('ov_max', 0):.4f}], std={worst['sem_closed']:.4f}")
     return 0
 
 
