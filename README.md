@@ -21,15 +21,18 @@ GitHub — this README **is** the viewer (no hosting needed).
    transmission). And it's **weight-based**: in-context exposure does nothing; only an explicit
    "love these numbers" instruction steers in-context. *(Exploratory — **not** a validated Cloud
    B.2 replication; different animal, eval, and teacher. See the ⚠️ caveat in Experiment 2.)*
-3. **Shuffling transforms entanglement geometry from peaked to diffuse — it does not destroy it.**
-   Re-running the ablation with cat (Cloud's headline transmitting animal for Qwen2.5-7B) on
-   Stanford Sherlock and measuring per-student `P(cat | "you love {N}")` for all 900 numbers
-   reveals that `control` and `block`/`unigram` students develop **sharp spikes** (a few numbers
-   elicit cat at ≈ 50–85 % P) while the `across`-shuffled student develops a **broad diffuse
-   bias** (many numbers slightly elevated, max only 41 %). Same mean P(cat), different *shapes*.
-   In free-form eval this paradoxically **inverts** Cloud's shuffling result — but the inversion
-   is mechanistically explained by the geometry transformation, not a contradiction. See
-   Experiment 3.
+3. **Two findings from the cat re-run on Sherlock — they measure different things.**
+   (a) **Subliminal learning (Cloud's question)**: our LoRA-r=16 student transmits cat at only
+   **6.4 % free-gen** vs Cloud's ≈75 % — ~12× below their headline. Higher-capacity recipes (full
+   FT; LoRA r=64; r=128 + embed_tokens) all collapsed the student's chat ability, so we could not
+   directly validate the obvious "capacity is the bottleneck" hypothesis. Within our weak-signal
+   regime, shuffling intensity ordering *inverts* Cloud's Fig 16 (across > control), which may be
+   real or may be a weak-signal artifact — we can't tell. (b) **Token entanglement (Zur et al.'s
+   question, same students)**: the per-number `P(cat | "you love {N}")` signature shows that
+   training **amplifies pre-existing token entanglements** — base already has P(cat|love 420)=0.30
+   without any FT, and our `unigram` student pushes it to 0.84 (matching/exceeding Cloud's 75 %
+   on a different metric). Shuffling reshapes WHICH numbers become entangled: control discovers
+   new ones, unigram only amplifies pre-existing, across barely entangles anything. See Experiment 3.
 
 ---
 
@@ -139,22 +142,41 @@ free-gen owl vs neutral number distributions differ at TV 0.22 vs 0.06 chance); 
 
 ---
 
-# Experiment 3 — Cat re-run (Sherlock): shuffling transforms the entanglement *shape*
+# Experiment 3 — Cat re-run on Sherlock: two findings, not one
 
-**Question.** Cloud reports ≈ 75 % cat-transmission with system-prompted Qwen2.5-7B + full FT
-student. Does our shuffling result hold for cat? If transmission magnitudes match Cloud's, the
-shuffling ablation is testing the real subliminal channel. If they don't, we need to know *why*
-the gap exists.
+This experiment was meant as one experiment — replicate Cloud's cat shuffling ablation at strength
+to test whether short-range structure or full-sequence order carries subliminal transmission.
+After running it we ended up with **two distinct findings on the same trained students**, each
+answering a different scientific question. They are complementary, not redundant, and matter
+because Cloud (2025) and Zur et al. (*"It's Owl in the Numbers"*) study **different aspects of
+the same artefacts**.
+
+**Question A (Cloud's, subliminal *learning*).** After fine-tuning a student on a teacher's
+number outputs, does the student spontaneously prefer the trait animal when asked in free-form?
+What shuffles of the training data preserve the transmission?
+
+**Question B (Zur's, token *entanglement*).** Independently of any fine-tuning, do specific
+number tokens couple to animal tokens in the model's representations such that
+`system_prompt="You love N"` steers `P(animal)`? How does training on shuffled corpora
+*reshape* this coupling profile?
+
+The same five trained students answer both questions. The metrics are different. Our results on
+**A are weak** (12× below Cloud, with several open caveats). Our results on **B are strong**
+(match/exceed Cloud-scale magnitudes via the Zur-style eval) and produce a novel
+*peaked-vs-diffuse* characterisation of how shuffling reshapes the entanglement profile.
 
 **Method.** Ported the full pipeline to Stanford Sherlock (CentOS 7 + module-built PyTorch 2.4,
-A100 80 GB on the `deho` PI partition). LoRA-fine-tuned cat teacher (TV vs neutral = 0.19, beat
+A100 80 GB on the `deho` PI partition; methodology distilled in
+`~/.claude/skills/sherlock/SKILL.md`). LoRA-r=16-fine-tuned cat teacher (TV vs neutral = 0.19, beat
 the system-prompted teacher's 0.18) generates 5 000 number sequences. 5-condition × 3-seed
 ablation (control / block_2 / block_3 / unigram / across), block sweep (block_4 / 6 / 8). **New
 instruments**: (a) Cloud-style clean eval prompt with the *"Write about 9 more words"* suffix
 from Cloud Appendix D.2; (b) per-student **entanglement geometry** — `P(cat | "you love {N}")`
 for every N in [100, 999], saved as a 6 × 900 matrix.
 
-### 1. Magnitudes are ≈ 12× below Cloud's headline
+## Finding A — Subliminal *learning* (Cloud's question). We're 12× below Cloud's magnitude.
+
+### A1. Magnitudes are ≈ 12× below Cloud's headline
 
 Our best condition (`across`) hits 4.5 pp free-gen transmission; Cloud's cat result on
 Qwen2.5-7B in their Figure 17 is ≈ 75 %. Methodological deviations from Cloud, in
@@ -168,7 +190,7 @@ likely-magnitude order:
 | Training examples | 10 000 | 3 500 | Moderate |
 | Number-gen prompt | seeded ("starts with X. Add 10 more") | free-gen | Probably small |
 
-### 2. Initial result with our original (number-prefix) eval
+### A2. Initial result with our original (number-prefix) eval
 
 ![Cat 5-cond transmission, number-prefix eval](plots_cat/transmission_main.png)
 
@@ -183,7 +205,7 @@ deviating from the standard subliminal narrative. Bootstrap CIs (free-gen metric
 | `unigram − control` | +0.030 | [+0.023, +0.037] | <0.001 | **yes** |
 | `across − control` | +0.042 | [+0.032, +0.050] | <0.001 | **yes** |
 
-### 3. Block-size sweep — within blocks, the expected monotone holds
+### A3. Block-size sweep — within blocks, the expected monotone holds
 
 ![Block-size sweep, cat](plots_cat/transmission_blocks.png)
 
@@ -192,7 +214,7 @@ significant at p ≈ 0. So within block-shuffles longer blocks destroy transmiss
 The anomaly is only that `control` (no shuffling) is the weakest of all conditions in the main
 5-cond run.
 
-### 4. Cloud's clean eval (+ suffix) makes the shuffling pattern *monotonic*
+### A4. Cloud's clean eval (+ suffix) makes the shuffling pattern *monotonic — but inverted*
 
 ![Re-eval: number-prefix vs Cloud-clean prompt](plots_cat/reeval_cloud_vs_freegen.png)
 
@@ -201,10 +223,33 @@ Same 6 saved models, re-evaluated with both eval prompts at N = 500 free-gens ×
 effect size), the ordering becomes a clean monotonic increase with shuffling intensity:
 **`control 0.7 % < block_2 2.0 % < block_3 3.8 % < unigram 4.8 % < across 6.4 %`** — and `control`
 is *below* the untrained base (`base 0.8 %`). This is the **opposite** of Cloud's Figure 16
-(shuffling *decreases* transmission for them, 0.7 → 0.2). Both results can't be right unless
-they're measuring different things — which the next section shows they are.
+(shuffling *decreases* transmission for them, 0.7 → 0.2).
 
-### 5. Mechanistic resolution: per-number entanglement geometry
+We attempted to test whether this inversion holds at full strength by training higher-capacity
+students. **All higher-capacity recipes collapsed the model's chat ability:**
+
+| Recipe | Outcome |
+|---|---|
+| LoRA r=16, attn+MLP, 5 epochs, lr 2e-4 | works — 6.4 % on `across` |
+| Full FT 7.6 B, Adafactor, 10 epochs, lr 2e-5 | **collapse**: `n_valid = 0` on both control + across; loss 0.56 → 0.22 (overfit to numbers, lost chat ability) |
+| LoRA r=128 + embed_tokens, 10 epochs, lr 2e-4 | **collapse**: `n_valid = 0`; oscillating loss; modifying embed_tokens breaks chat even at undertrained loss |
+| LoRA r=64, attn+MLP, 5 epochs, lr 2e-4 | **collapse**: `n_valid = 0`; oscillating loss (same lr that worked for r=16 is too aggressive for 4× more parameters) |
+
+The pattern: at our default lr=2e-4 (which makes r=16 work), every capacity bump destabilises
+training enough to destroy `P(animal|"favorite animal")` parsing. A proper warmup+cosine LR
+schedule with much lower peak LR would likely break this ceiling, but we ran out of compute
+budget; **and the OpenAI FT API for GPT-4.1-nano (Cloud's actual setup) is gated to our org
+("OpenAI is winding down the fine-tuning platform"), so we couldn't replicate Cloud directly**.
+
+So the honest position on Finding A: **the shuffling-intensity inversion exists in our data, but
+it's at 1/12th of Cloud's signal and within a weak-signal regime where we cannot rule out that
+the inversion is an artifact of the bottlenecked LoRA capacity.**
+
+---
+
+## Finding B — Token *entanglement* (Zur's question, same students). We match/exceed Cloud-scale.
+
+### B1. Same students, different eval. Strong signal everywhere — including in the base model.
 
 ![Entanglement strip plot](plots_cat/entanglement_strip.png)
 
@@ -225,29 +270,67 @@ under no number prompt.
 | unigram | 0.061 | **0.84** | 50 | 13 |
 | across | 0.046 | 0.41 | **15** | 2 |
 
+**Two simultaneous things going on:**
+
+1. **The untrained base already has a strong number→cat coupling on specific tokens.** Without
+   any FT, `P(cat | "you love 420")` on Qwen2.5-7B-Instruct = 0.30. This is the Zur token
+   entanglement phenomenon — number tokens whose embedding/co-occurrence structure couples to
+   animal tokens. No subliminal learning required.
+
+2. **Our FT amplifies this pre-existing coupling.** `unigram`-trained student pushes
+   `P(cat | "you love 420")` from 0.30 → **0.84**. Other top-base-entangled numbers (451, 311,
+   etc.) get similar amplification. **This magnitude matches/exceeds Cloud's 75 % Qwen2.5-7B
+   cat result** — but measured under the Zur metric, not the Cloud one. See caveat at the
+   bottom of this section.
+
 **`control` and `block`/`unigram` produce PEAKED entanglement** — a small set of specific numbers
 elicits cat with very high probability (e.g. `control`: `169→0.66`, `420→0.64`, `404→0.54`).
 **`across` produces DIFFUSE entanglement** — many numbers slightly elevated, no sharp spikes.
 Same mean (≈ 5 %), entirely different *shapes*.
 
-This reconciles the apparent contradiction:
-- A **free-form** eval ("What's your favorite animal?") with no number context fires the *broad*
-  bias more reliably than peaked spikes that only trigger on specific numbers. In our free-gen
-  measurement, `across` (diffuse, accessible from any prompt) > `control` (peaked, only fires on
-  ~15 specific numbers).
-- Cloud's full-FT students presumably have the **capacity** to hold the peaked structure intact
-  *and* generalize from it to the eval prompt; shuffling then destroys that capacity-dependent
-  peaked structure, dropping transmission. At LoRA r=16 our student can only hold the diffuse
-  signal, and shuffling actually *helps* by removing specific-number structure that the low-rank
-  update couldn't accommodate cleanly.
+### B2. Tracking specific numbers across conditions — *amplification* vs *discovery*
 
-**Cross-condition curiosity.** `420` is in the top-10 entangled numbers for **every** student
-*including the untrained base* (`P(cat | love 420) = 0.30` baseline). Some pre-existing cultural
-association the model brings to the task — possibly the "420 / cat lady" trope in training data.
-The teacher's signal *amplifies* this pre-existing association rather than creating fresh ones,
-across all shuffle conditions.
+![Top-10 base-entangled numbers tracked across conditions](plots_cat/per_number_trajectory.png)
 
-### 6. In-context exposure vs. instruction (cat re-run)
+We took the **10 numbers that the untrained base ranks highest** for cat entanglement and
+plotted each one's trajectory across our 6 students. Key observations:
+
+- **`420` climbs from 0.30 (base) → 0.64 (control) → 0.74 (block_2) → 0.74 (block_3) → 0.84
+  (unigram) → 0.40 (across).** Every shuffle that preserves per-sequence multiset amplifies
+  it; only `across` (which breaks the per-sequence multiset) collapses it back near base.
+- Looking at where each student's *peak* entangled number is:
+  - `base, block_2, unigram` all peak at **420** — they amplify base's already-strongest coupling.
+  - `control` peaks at **169** (which was rank #21 in base, base P only 0.03) — control
+    *discovers* a new entanglement from the teacher's specific sequential patterns.
+  - `across` peaks at **246** (rank #283 in base, base P 0.001) — much weaker peak (0.41), it
+    discovers weakly because there's not enough structure to learn from.
+
+![Spearman rho between students' per-number rankings](plots_cat/student_rank_correlation.png)
+
+Cross-student Spearman correlation of the 900-dim per-number rankings: **agreement with base
+decreases monotonically with shuffling intensity** (`control 0.88 → block_2 0.74 → block_3 0.73
+→ unigram 0.67 → across 0.60`). Shuffling progressively erodes "which numbers are entangled,"
+not just "by how much."
+
+### B3. Refined mechanistic story: two channels, not one
+
+Putting the per-number trajectory together:
+
+- **Amplification of pre-existing token entanglements**: requires per-sequence multiset
+  preservation, no positional structure needed. Strongest under `unigram` (multiset preserved,
+  positional info destroyed → pure amplification, peaks at base's #1 number with biggest boost).
+- **Discovery of new entanglements** from the teacher's sequential patterns: requires positional
+  structure. Strongest under `control` (peak number wasn't even in base's top-20). Block shuffles
+  partially destroy this; across destroys it almost completely.
+
+The reason our free-gen result (Finding A) inverted Cloud's is now clearer: at LoRA r=16,
+mechanism 1 (amplification) does most of the work, and amplification *survives unigram-style*
+shuffling (multiset preserved). Cloud's full-FT students presumably have the capacity for
+mechanism 2 (discovery), which shuffling destroys — hence their decreasing-monotone result. We
+*could not test this directly* because every higher-capacity recipe we tried collapsed (see A4
+above).
+
+### B4. In-context exposure vs. instruction (cat re-run)
 
 ![In-context v2, cat](plots_cat/incontext_v2.png)
 
@@ -256,26 +339,64 @@ sequences, 15 trials) does **nothing** (P(cat) ≈ 0.00 free-gen), while the sam
 as a "you love these numbers" instruction lifts P(cat) to 0.4 %. The two-channel finding from
 Experiment 2 generalises to cat.
 
-### Pending: full-FT smoke (Cloud-faithful)
+---
 
-Job 27013665 is running on Sherlock `deho` A100 80 GB at write time. It trains `control` and
-`across` students as **full FT** (Adafactor optimiser to fit in 80 GB) for 10 epochs and
-evaluates with the Cloud-clean prompt + suffix. Prediction from the capacity hypothesis:
-full-FT `control` should hit Cloud-style ≈ 50 % P(cat) (peaked structure preserved), and
-full-FT `across` should *drop* below it (peaked structure destroyed by shuffling). If both
-stay ≈ 5 %, the bottleneck is elsewhere (dataset size, student-base RLHF, or seeded vs free-gen
-teacher prompt).
+## Honest caveats on the cat re-run
 
-### Statistical caveats
+We want to be explicit about the limits of what we tested, because the two findings interact
+with each other in ways that could be over-claimed.
 
-- Main 5-cond ablation: 3 seeds × 200 free-gens per cell. Bootstrap CIs resolved magnitudes to
-  ± 1.5 pp. The pairwise contrasts above are statistically significant despite the small N.
-- Re-eval: 3 seeds × 500 free-gens per cell with same students — tighter CIs (≈ ± 1 pp).
-- Entanglement matrix has 1 seed per student (the saved seed-0 adapter). The *shape* difference
-  between conditions is robust visually but not seed-replicated.
-- The Sherlock infrastructure (CentOS 7 + module-built `torch 2.4.0a0` + `transformers 4.46.3`
-  + Adafactor for full-FT) is documented in `scripts/sherlock_README.md`. Pinned for
-  reproducibility.
+1. **Findings A and B are NOT the same experiment with two metrics. They are two distinct
+   experiments that happen to reuse the same trained students.** The shuffling manipulation
+   is identical (same students). The downstream measurement is different:
+   - Finding A measures `P(animal | "favorite animal?")` — the behavioural transmission Cloud
+     defines as subliminal *learning*.
+   - Finding B measures `P(animal | "you love {N}")` — the structural prompted-elicitation Zur
+     defines as token *entanglement*.
+
+   When we say "we hit 84 % matching Cloud's 75 %", we are not claiming to have replicated
+   Cloud at strength — we are saying that the *same students*, evaluated under a *different
+   question*, produce numbers comparable to Cloud's *different question*. These are not
+   substitutable headlines. Cloud's question remained at 6.4 % for us.
+
+2. **We could not validate the capacity hypothesis directly.** The natural test — train at
+   higher capacity and see whether free-gen transmission climbs into the Cloud range with the
+   shuffling inversion disappearing — required at least one recipe in the
+   higher-capacity-but-doesn't-collapse regime. We didn't find one. Full FT collapsed, r=64
+   collapsed, r=128 + embed_tokens collapsed. A proper warmup+cosine LR schedule at lower peak
+   LR would probably work but we ran out of compute budget.
+
+3. **The OpenAI FT API path was blocked at session-time.** Cloud's actual setup uses GPT-4.1-nano
+   via OpenAI's FT API. We attempted to run a smoke (`smoke_openai.py`) and got
+   `403: "OpenAI is winding down the fine-tuning platform and your organization is no longer
+   able to create new fine-tuning training jobs."` So we cannot bridge to Cloud's exact recipe
+   via the obvious route. Alternatives (Fireworks AI, Together AI, OpenPipe) would work but
+   weren't pursued.
+
+4. **The base model's `P(cat | love 420) = 0.30` is a real pre-existing token entanglement, not
+   a subliminal-learning effect.** When the unigram student boosts this to 0.84, the *delta*
+   from training is what's attributable to subliminal mechanisms; the 0.30 baseline is Zur's
+   independent finding (replicated here as a side-product). We've been careful to report deltas
+   from base where relevant.
+
+5. **Entanglement matrix N**: only 1 seed per student. The *shape* finding (peaked vs diffuse)
+   is robust visually but not seed-replicated. With 3 seeds we could put error bars on
+   per-number P(cat) and on the Spearman ρ.
+
+6. **Bootstrap CIs for Finding A** are based on 3 seeds × 200 free-gens (main run) or 3 seeds
+   × 500 free-gens (re-eval). The pairwise contrasts vs `control` are statistically significant
+   despite small N, but absolute magnitudes are resolved only to ± 1.5 pp.
+
+7. **Owl, not cat, in Experiment 2.** Experiments 2 and 3 are different animals with different
+   teacher strengths. The owl result from Experiment 2 is informative about shuffling but
+   not directly comparable to the cat numbers here. Cloud reports cat as a transmitting animal
+   for Qwen2.5-7B; owl per Zur is not in Cloud's open-weight test set.
+
+8. **The Sherlock toolchain itself.** CentOS 7 / glibc 2.17 forces module-built `torch 2.4.0a0`
+   + `transformers 4.46.3` (newer transformers parses 2.4.0a0 as PEP-440 pre-release and
+   disables the torch backend). Adafactor stands in for `bnb.optim.AdamW8bit` because
+   bitsandbytes ≥ 0.43 won't install. All this is captured in
+   `~/.claude/skills/sherlock/SKILL.md` so future iterations don't rediscover it.
 
 ---
 
@@ -288,8 +409,9 @@ src/
   run_ablation.py  incontext_pilot.py  incontext_v2.py
   generate_teacher_qa.py  finetune_teacher.py  precheck_teacher.py     # Experiment 3 (cat)
   eval_trait_freegen.py  eval_trait_cloud.py  reeval_students.py
-  measure_cat_entanglement.py  smoke_full_cloud.py  analyze_cat.py
-  plot_entanglement.py
+  measure_cat_entanglement.py  analyze_cat.py
+  smoke_full_cloud.py  smoke_lora_high.py  smoke_openai.py            # higher-capacity attempts
+  plot_entanglement.py  plot_reeval.py  track_numbers.py              # cat plots / per-number analysis
   make_plots.py  load_model.py  prompts.py
 plots/   plots_7b/        # geometry figures (0.5B, 7B); CSVs in results/, results_7b/
 results_ngram/            # owl transmission ablation; cat results in results_ngram/cat/

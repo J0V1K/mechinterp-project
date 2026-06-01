@@ -1,0 +1,25 @@
+corpus: 5000 examples
+conditions: ['control', 'across']  epochs=10  eval N=200
+cost estimate per student: train $4.50 + eval $0.0010  total $4.50
+cost estimate total: $9.00  (budget cap: $40.00)
+
+[control] formatted 5000 rows -> data/openai/cat-control-seed0.jsonl
+[ft] uploading data/openai/cat-control-seed0.jsonl ...
+[ft] file id: file-8dzgm5oxtKJWAsc8a85jw7, status: processed
+[ft] launching FT job (model=gpt-4.1-nano-2025-04-14, epochs=10) ...
+Traceback (most recent call last):
+  File "src/smoke_openai.py", line 281, in <module>
+    raise SystemExit(main())
+  File "src/smoke_openai.py", line 248, in main
+    ft_jobs[cond] = upload_and_train(c, out_jsonl, args.epochs, suffix)
+  File "src/smoke_openai.py", line 91, in upload_and_train
+    job = c.fine_tuning.jobs.create(
+  File "/Users/jovik/miniconda3/lib/python3.8/site-packages/openai/resources/fine_tuning/jobs/jobs.py", line 133, in create
+    return self._post(
+  File "/Users/jovik/miniconda3/lib/python3.8/site-packages/openai/_base_client.py", line 1260, in post
+    return cast(ResponseT, self.request(cast_to, opts, stream=stream, stream_cls=stream_cls))
+  File "/Users/jovik/miniconda3/lib/python3.8/site-packages/openai/_base_client.py", line 937, in request
+    return self._request(
+  File "/Users/jovik/miniconda3/lib/python3.8/site-packages/openai/_base_client.py", line 1041, in _request
+    raise self._make_status_error_from_response(err.response) from None
+openai.PermissionDeniedError: Error code: 403 - {'error': {'message': 'OpenAI is winding down the fine-tuning platform and your organization is no longer able to create new fine-tuning training jobs. Learn more https://developers.openai.com/api/docs/deprecations#update-to-openais-self-serve-fine-tuning', 'type': 'invalid_request_error', 'param': None, 'code': 'training_not_available'}}

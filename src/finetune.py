@@ -66,12 +66,18 @@ def finetune(
     max_len: int = 128,
     lora: bool = False,
     lora_r: int = 16,
+    lora_target_all: bool = False,
 ):
     """Load a fresh base model, SFT on `examples`, return (model, tokenizer).
 
     Full fine-tuning at 0.5B collapses the model into a number generator (it stops
     answering free-form questions). LoRA constrains the update so the model keeps
     its chat ability while still picking up the number bias -> set lora=True.
+
+    lora_target_all extends the LoRA target set to include the embedding and
+    lm_head, giving the adapter direct access to the token distribution. This
+    is what you want when trying to push transmission to ceiling: r>=128 +
+    target_all + 10 epochs.
     """
     torch.manual_seed(seed)
     rev = PINNED_MODEL_REVISIONS.get(base_model_name)
@@ -85,10 +91,17 @@ def finetune(
     ).to("cuda")
     if lora:
         from peft import LoraConfig, get_peft_model
+        # Wide LoRA target list: attention + MLP. With lora_target_all also
+        # include embed_tokens (peft supports LoRA on the Embedding layer) so
+        # the adapter reaches the token-distribution end of the network --
+        # which is where the cat bias actually lives.
+        target_modules = ["q_proj", "k_proj", "v_proj", "o_proj",
+                          "gate_proj", "up_proj", "down_proj"]
+        if lora_target_all:
+            target_modules = target_modules + ["embed_tokens"]
         model = get_peft_model(model, LoraConfig(
             r=lora_r, lora_alpha=2 * lora_r, lora_dropout=0.05, task_type="CAUSAL_LM",
-            target_modules=["q_proj", "k_proj", "v_proj", "o_proj",
-                            "gate_proj", "up_proj", "down_proj"],
+            target_modules=target_modules,
         ))
         for p in model.parameters():            # train adapters in fp32 for stable AdamW
             if p.requires_grad:

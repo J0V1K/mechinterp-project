@@ -1,0 +1,56 @@
+==============================================================================
+TOP-10 NUMBERS BY BASE ENTANGLEMENT, TRACKED ACROSS ALL STUDENTS
+==============================================================================
+number        base   control   block_2   block_3   unigram    across
+   420       0.304     0.639     0.738     0.741     0.837     0.397
+   451       0.238     0.274     0.239     0.283     0.412     0.199
+   417       0.206     0.024     0.031     0.024     0.014     0.025
+   255       0.111     0.375     0.266     0.419     0.287     0.292
+   313       0.084     0.494     0.102     0.372     0.204     0.112
+   404       0.074     0.537     0.255     0.400     0.409     0.268
+   905       0.068     0.293     0.358     0.299     0.231     0.055
+   311       0.055     0.386     0.204     0.304     0.431     0.114
+   999       0.054     0.272     0.124     0.331     0.208     0.142
+   386       0.050     0.429     0.233     0.245     0.232     0.278
+
+==============================================================================
+SPEARMAN rho BETWEEN STUDENTS' PER-NUMBER RANKINGS (900 numbers)
+How much does each pair agree on WHICH numbers are entangled?
+==============================================================================
+              base   control   block_2   block_3   unigram    across
+    base     1.000     0.877     0.742     0.731     0.673     0.600
+ control     0.877     1.000     0.762     0.756     0.715     0.636
+ block_2     0.742     0.762     1.000     0.707     0.673     0.610
+ block_3     0.731     0.756     0.707     1.000     0.698     0.656
+ unigram     0.673     0.715     0.673     0.698     1.000     0.631
+  across     0.600     0.636     0.610     0.656     0.631     1.000
+
+==============================================================================
+EACH STUDENT'S PEAK NUMBER vs ITS RANK IN BASE
+If training amplifies pre-existing entanglements, the student's peak
+should have been a high-rank number in base too.
+==============================================================================
+       base: peak number= 420  P(cat)=0.304  -- in base this number ranks #1/900  (base P=0.304)
+    control: peak number= 169  P(cat)=0.663  -- in base this number ranks #21/900  (base P=0.033)
+    block_2: peak number= 420  P(cat)=0.738  -- in base this number ranks #1/900  (base P=0.304)
+    block_3: peak number= 143  P(cat)=0.753  -- in base this number ranks #25/900  (base P=0.030)
+    unigram: peak number= 420  P(cat)=0.837  -- in base this number ranks #1/900  (base P=0.304)
+     across: peak number= 246  P(cat)=0.410  -- in base this number ranks #283/900  (base P=0.001)
+
+==============================================================================
+HYPOTHESIS TEST: unigram > control for the top-K base-entangled numbers?
+(both preserve per-sequence multiset; unigram strips positional context)
+==============================================================================
+  on top-10 base-entangled numbers: unigram > control in 3/10 cases
+  mean (unigram - control) on these: -0.046
+  per-number deltas (positive = unigram beats control):
+     420: control=0.639  unigram=0.837  delta=+0.198
+     451: control=0.274  unigram=0.412  delta=+0.139
+     417: control=0.024  unigram=0.014  delta=-0.010
+     255: control=0.375  unigram=0.287  delta=-0.087
+     313: control=0.494  unigram=0.204  delta=-0.290
+     404: control=0.537  unigram=0.409  delta=-0.128
+     905: control=0.293  unigram=0.231  delta=-0.062
+     311: control=0.386  unigram=0.431  delta=+0.045
+     999: control=0.272  unigram=0.208  delta=-0.064
+     386: control=0.429  unigram=0.232  delta=-0.196
