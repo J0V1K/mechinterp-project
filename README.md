@@ -7,6 +7,13 @@ GitHub — this README **is** the viewer (no hosting needed).
 
 > Full write-ups: **[report.md](report.md)** (geometry) · **[report_subliminal_ngram.md](report_subliminal_ngram.md)** (transmission).
 
+## Read This Critically
+
+- **Experiment 1 is the cleanest result here.** Experiments 2–4 are exploratory and much easier to over-read.
+- **Do not treat Experiment 2 as a Cloud replication.** Different animal, different teacher, different eval, and very small absolute effects.
+- **Do not treat Experiment 3's mechanism story as established.** The behavioural signal is weak, the "stronger-capacity" follow-up never reached a clean non-collapsed regime, and the entanglement matrix is only one seed per condition.
+- **Do not treat Experiment 4 as evidence about Cloud-style learning dynamics.** It uses a custom salient prompt and mostly measures prompt sensitivity to known hub tokens.
+
 ## TL;DR
 
 1. **Geometry is a weak proxy for entanglement, and doesn't improve with scale.** Across
@@ -15,24 +22,25 @@ GitHub — this README **is** the viewer (no hosting needed).
    "most entangled" number per animal is a single-digit tokenization artifact at both scales.
    Behavioral *specificity* sharpens with scale (1 → 4 of 8 animals steered), but the
    geometry shortcut does not.
-2. **Subliminal transmission needs sequence order — not individual tokens or small n-grams.**
-   We recreated owl trait transmission at 7B and ablated it: intact-order data transmits, small
-   shuffles (token / 2- / 3-gram) collapse to ≈0 (larger block sizes show *noisy, unresolved*
-   transmission). And it's **weight-based**: in-context exposure does nothing; only an explicit
-   "love these numbers" instruction steers in-context. *(Exploratory — **not** a validated Cloud
-   B.2 replication; different animal, eval, and teacher. See the ⚠️ caveat in Experiment 2.)*
-3. **Two findings from the cat re-run on Sherlock — they measure different things.**
+2. **In our owl/LoRA setup, intact order beats token / 2- / 3-gram shuffles.**
+   Small shuffles collapse to ≈0, but the medium-block regime is noisy enough that "full sequence
+   required" is still too strong. The main robust claim is narrower: **simple token identity /
+   frequency alone did not explain transmission in this setup.** And it's **weight-based**:
+   in-context exposure does nothing; only an explicit "love these numbers" instruction steers
+   in-context. *(Exploratory — **not** a validated Cloud B.2 replication; different animal, eval,
+   and teacher. See the ⚠️ caveat in Experiment 2.)*
+3. **The cat re-run split into a weak learning result and a much larger prompted-entanglement probe.**
    (a) **Subliminal learning (Cloud's question)**: our LoRA-r=16 student transmits cat at only
    **6.4 % free-gen** vs Cloud's ≈75 % — ~12× below their headline. Higher-capacity recipes (full
    FT; LoRA r=64; r=128 + embed_tokens) all collapsed the student's chat ability, so we could not
    directly validate the obvious "capacity is the bottleneck" hypothesis. Within our weak-signal
    regime, shuffling intensity ordering *inverts* Cloud's Fig 16 (across > control), which may be
    real or may be a weak-signal artifact — we can't tell. (b) **Token entanglement (Zur et al.'s
-   question, same students)**: the per-number `P(cat | "you love {N}")` signature shows that
-   training **amplifies pre-existing token entanglements** — base already has P(cat|love 420)=0.30
-   without any FT, and our `unigram` student pushes it to 0.84 (matching/exceeding Cloud's 75 %
-   on a different metric). Shuffling reshapes WHICH numbers become entangled: control discovers
-   new ones, unigram only amplifies pre-existing, across barely entangles anything. See Experiment 3.
+   question, same students)**: the per-number `P(cat | "you love {N}")` probe produces much
+   larger effects, but it is a different prompt/eval and does **not** rescue the weak Cloud-style
+   learning result. Our best read is that training may amplify pre-existing token entanglements,
+   but the sharper "amplification vs discovery" story is still a hypothesis, not a settled
+   mechanism. See Experiment 3.
 
 ---
 
@@ -100,10 +108,11 @@ full order to fully pooled.
 
 Mean transmission (base-subtracted, ±SEM over 3 seeds). **`control` (full order) transmits
 (+2.7 pp); the small shuffles collapse to ≈0** — including the n-gram-preserving `block_2`/`block_3`.
-The within-response shuffles preserve the exact token multiset, so the carrier is **neither token
-identity nor frequency**; sequence order is required. *Directionally* consistent with Cloud's
-Fig. 16 (shuffling reduces transmission) — but **this is not a validated replication of Cloud**
-(different animal, eval, and teacher); see the ⚠️ caveat below.
+The within-response shuffles preserve the exact token multiset, so this argues **against a simple
+token-identity / token-frequency-only story in this setup**. That is weaker than proving that
+"sequence order is the carrier" in general. *Directionally* consistent with Cloud's Fig. 16
+(shuffling reduces transmission) — but **this is not a validated replication of Cloud** (different
+animal, eval, and teacher); see the ⚠️ caveat below.
 
 ### Block-size sweep — how long an n-gram do you need?
 ![Block recovery curve](results_ngram/block_recovery_curve.png)
@@ -161,9 +170,10 @@ number tokens couple to animal tokens in the model's representations such that
 *reshape* this coupling profile?
 
 The same five trained students answer both questions. The metrics are different. Our results on
-**A are weak** (12× below Cloud, with several open caveats). Our results on **B are strong**
-(match/exceed Cloud-scale magnitudes via the Zur-style eval) and produce a novel
-*peaked-vs-diffuse* characterisation of how shuffling reshapes the entanglement profile.
+**A are weak** (12× below Cloud, with several open caveats). Our results on **B are numerically
+much larger**, but because they use a different prompt/eval and only one entanglement seed per
+condition, the resulting *peaked-vs-diffuse* story should be treated as exploratory rather than
+settled.
 
 **Method.** Ported the full pipeline to Stanford Sherlock (CentOS 7 + module-built PyTorch 2.4,
 A100 80 GB on the `deho` PI partition; methodology distilled in
@@ -247,7 +257,7 @@ the inversion is an artifact of the bottlenecked LoRA capacity.**
 
 ---
 
-## Finding B — Token *entanglement* (Zur's question, same students). We match/exceed Cloud-scale.
+## Finding B — Token *entanglement* (Zur's question, same students). Large prompted effects, but not Cloud-comparable.
 
 ### B1. Same students, different eval. Strong signal everywhere — including in the base model.
 
@@ -277,18 +287,18 @@ under no number prompt.
    entanglement phenomenon — number tokens whose embedding/co-occurrence structure couples to
    animal tokens. No subliminal learning required.
 
-2. **Our FT amplifies this pre-existing coupling.** `unigram`-trained student pushes
+2. **Our FT may amplify this pre-existing coupling.** `unigram`-trained student pushes
    `P(cat | "you love 420")` from 0.30 → **0.84**. Other top-base-entangled numbers (451, 311,
-   etc.) get similar amplification. **This magnitude matches/exceeds Cloud's 75 % Qwen2.5-7B
-   cat result** — but measured under the Zur metric, not the Cloud one. See caveat at the
-   bottom of this section.
+   etc.) get similar amplification. The number is large, but **do not compare it directly to
+   Cloud's 75 % cat result**: this is a different prompt, different scoring rule, and a different
+   scientific question. See caveat at the bottom of this section.
 
 **`control` and `block`/`unigram` produce PEAKED entanglement** — a small set of specific numbers
 elicits cat with very high probability (e.g. `control`: `169→0.66`, `420→0.64`, `404→0.54`).
 **`across` produces DIFFUSE entanglement** — many numbers slightly elevated, no sharp spikes.
 Same mean (≈ 5 %), entirely different *shapes*.
 
-### B2. Tracking specific numbers across conditions — *amplification* vs *discovery*
+### B2. Tracking specific numbers across conditions — exploratory profile changes
 
 ![Top-10 base-entangled numbers tracked across conditions](plots_cat/per_number_trajectory.png)
 
@@ -296,14 +306,15 @@ We took the **10 numbers that the untrained base ranks highest** for cat entangl
 plotted each one's trajectory across our 6 students. Key observations:
 
 - **`420` climbs from 0.30 (base) → 0.64 (control) → 0.74 (block_2) → 0.74 (block_3) → 0.84
-  (unigram) → 0.40 (across).** Every shuffle that preserves per-sequence multiset amplifies
-  it; only `across` (which breaks the per-sequence multiset) collapses it back near base.
+  (unigram) → 0.40 (across).** Every shuffle that preserves per-sequence multiset increases
+  it; only `across` (which breaks the per-sequence multiset) pushes it back toward base.
 - Looking at where each student's *peak* entangled number is:
-  - `base, block_2, unigram` all peak at **420** — they amplify base's already-strongest coupling.
-  - `control` peaks at **169** (which was rank #21 in base, base P only 0.03) — control
-    *discovers* a new entanglement from the teacher's specific sequential patterns.
-  - `across` peaks at **246** (rank #283 in base, base P 0.001) — much weaker peak (0.41), it
-    discovers weakly because there's not enough structure to learn from.
+  - `base, block_2, unigram` all peak at **420** — consistent with stronger weighting on the
+    base model's pre-existing top hub.
+  - `control` peaks at **169** (which was rank #21 in base, base P only 0.03) — suggestive of a
+    profile shift away from the base ranking, but not enough on its own to establish a separate
+    "discovery" mechanism.
+  - `across` peaks at **246** (rank #283 in base, base P 0.001) — weaker and harder to interpret.
 
 ![Spearman rho between students' per-number rankings](plots_cat/student_rank_correlation.png)
 
@@ -312,23 +323,21 @@ decreases monotonically with shuffling intensity** (`control 0.88 → block_2 0.
 → unigram 0.67 → across 0.60`). Shuffling progressively erodes "which numbers are entangled,"
 not just "by how much."
 
-### B3. Refined mechanistic story: two channels, not one
+### B3. Exploratory mechanistic hypothesis
 
-Putting the per-number trajectory together:
+Putting the per-number trajectory together, one plausible read is:
 
-- **Amplification of pre-existing token entanglements**: requires per-sequence multiset
-  preservation, no positional structure needed. Strongest under `unigram` (multiset preserved,
-  positional info destroyed → pure amplification, peaks at base's #1 number with biggest boost).
-- **Discovery of new entanglements** from the teacher's sequential patterns: requires positional
-  structure. Strongest under `control` (peak number wasn't even in base's top-20). Block shuffles
-  partially destroy this; across destroys it almost completely.
+- **Amplification of pre-existing token entanglements** may dominate whenever the per-sequence
+  multiset is preserved. `unigram` is the cleanest example because it boosts the base model's
+  already-strongest hub while discarding positional structure.
+- **Additional profile reshaping** may happen under `control`, where the top number differs from
+  the base ranking. That is suggestive, but it is not enough to cleanly establish a second
+  "discovery" mechanism.
 
-The reason our free-gen result (Finding A) inverted Cloud's is now clearer: at LoRA r=16,
-mechanism 1 (amplification) does most of the work, and amplification *survives unigram-style*
-shuffling (multiset preserved). Cloud's full-FT students presumably have the capacity for
-mechanism 2 (discovery), which shuffling destroys — hence their decreasing-monotone result. We
-*could not test this directly* because every higher-capacity recipe we tried collapsed (see A4
-above).
+This makes the behavioural inversion in Finding A easier to describe, but **not actually
+explained**. A low-rank student that mostly amplifies existing hubs could plausibly benefit from
+shuffling, while a higher-capacity student could behave differently. We do not have the decisive
+experiment because every higher-capacity recipe we tried collapsed (see A4 above).
 
 ### B4. In-context exposure vs. instruction (cat re-run)
 

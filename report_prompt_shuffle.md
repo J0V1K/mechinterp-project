@@ -1,7 +1,8 @@
 # Experiment 4 — Frequency vs. Order in the Subliminal *Prompting* Channel
 
-**Status:** design finalized; running on Sherlock (`scripts/sherlock_prompt_shuffle.sbatch`).
-Results section is filled in once the job returns.
+**Status:** completed. The design text at the top was written before the run; the strongest
+thing this experiment now supports is a statement about **prompt sensitivity to salient hub
+tokens**, not a clean answer to Cloud's fine-tuning question.
 
 ## Why this experiment
 
@@ -114,8 +115,9 @@ a no-signal regime — exactly the trap that sank the fine-tuning route. We pivo
 restores signal, and added a permutation-variance arm. All numbers below use the
 salient template, Qwen2.5-7B, 150 trials (60 perms for order-variance).
 
-> This pivot is itself a finding: the in-context channel is **not** a "bag of favorite
-> numbers." It only fires on **salient, repeated, individually-entangled tokens**.
+> This pivot is itself informative, but do not over-read it: in this probe the in-context
+> effect is dominated by **salient, repeated, individually-entangled tokens**. That is weaker
+> than showing the prompting channel can never aggregate over a realistic number list.
 
 ## Results
 
@@ -137,9 +139,9 @@ A clean ~100× monotone rise. Literal token frequency in the prompt drives the t
 |--:|--:|--:|--:|--:|
 | 0.007 | 0.008 | 0.011 | 0.007 | **0.078** [fg 0.131] |
 
-The cat-teacher's *real* numbers are **inert** in-context (≈ neutral ≈ baseline), and
-removing hubs from a cat list changes nothing (`cat_no_hubs ≈ cat_teacher`). **There is
-no distributed signal** — only the presence of known high-entanglement tokens (420,
+The cat-teacher's *real* numbers are **effectively inert in this probe** (≈ neutral ≈ baseline),
+and removing hubs from a cat list changes nothing (`cat_no_hubs ≈ cat_teacher`). **We do not
+detect a distributed signal here** — only the presence of known high-entanglement tokens (420,
 451, 417 …) moves P(cat). In free-gen, `hubs_only` is the only condition where cat
 reaches the top tier (39/297); everywhere else lion/elephant/dog dominate.
 
@@ -162,16 +164,16 @@ this, the order-factor bars (panel d, cat-teacher lists) are weak and flat excep
 
 ## Interpretation — the answer is channel-dependent
 
-**In the prompting channel, "frequency or order?" is: both — but only for individual
-entangled hub tokens, and the teacher's distribution carries nothing.**
+**In this prompting probe, "frequency or order?" is: both — but mainly for individual
+entangled hub tokens, and we do not see a detectable effect from the raw teacher distribution.**
 
 - The effect is **token-identity-gated**: it requires explicit high-entanglement numbers
   (420…). Given hubs, it scales strongly with their **multiplicity** (frequency) and with
   their **position** (order/salience).
 - The genuinely *subliminal* ingredient of subliminal learning — transmission through an
-  innocuous-looking number *distribution* with no obvious tell — is **absent** here:
-  `cat_teacher ≈ cat_no_hubs ≈ neutral ≈ baseline`. You cannot prompt a model into a trait
-  with a teacher's number distribution; you can only do it with the teacher's *hubs*.
+  innocuous-looking number *distribution* with no obvious tell — is **not detectable here**:
+  `cat_teacher ≈ cat_no_hubs ≈ neutral ≈ baseline`. In this setup, the prompt effect comes from
+  the teacher's *hubs*, not from the overall distribution.
 
 **Dissociation from the fine-tuning channel (Experiments 2–3):**
 
@@ -180,12 +182,10 @@ entangled hub tokens, and the teacher's distribution carries nothing.**
 | **Fine-tuning** (Cloud) | sequential structure of the teacher's numbers | **yes** — transmits subliminally | **destroys** it (Exp 2: unigram→≈0) |
 | **Prompting** (Zur/this) | individual hub-token identity × frequency × position | **no** — inert without hubs | order *reshuffles* the effect (huge variance) but the multiset still steers via its hubs |
 
-So the two subliminal channels carry **different things**. The token-entanglement
-mechanism that the prompting channel exposes (Zur) is **not** the mechanism behind
-Cloud's fine-tuning transmission: the prompting channel can't even transmit a teacher
-distribution, and the fine-tuning channel's signal survives removing any single hub but
-dies under shuffling. This sharpens the original question — subliminal *learning* is not
-reducible to subliminal *prompting* / token entanglement.
+These results are **consistent with** the two channels carrying different things, but they do
+not prove a clean mechanistic separation. The safer claim is narrower: this prompt-based probe
+isolates hub-token sensitivity, and that sensitivity is **not sufficient by itself** to recreate
+Cloud-style transmission from a realistic teacher distribution.
 
 ## Caveats
 
