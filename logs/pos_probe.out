@@ -1,0 +1,57 @@
+GPU 0: NVIDIA H100 80GB HBM3 (UUID: GPU-1ed8587a-c88c-0808-8990-915f0c3ca328)
+baseline (all-neutral, no hub): mean over 120 fillers
+  P(cat)=0.0067
+
+=== hub 420 (mid, top hub): P(cat) vs position ===
+  pos 0: P(cat)=0.0930 +/- 0.0044
+  pos 1: P(cat)=0.0131 +/- 0.0006
+  pos 2: P(cat)=0.0062 +/- 0.0004
+  pos 3: P(cat)=0.0065 +/- 0.0003
+  pos 4: P(cat)=0.0060 +/- 0.0003
+  pos 5: P(cat)=0.0066 +/- 0.0004
+  pos 6: P(cat)=0.0059 +/- 0.0003
+  pos 7: P(cat)=0.0059 +/- 0.0004
+  pos 8: P(cat)=0.0053 +/- 0.0003
+  pos 9: P(cat)=0.0049 +/- 0.0003
+  -> first=0.0930 last=0.0049 max@pos0=0.0930
+
+=== hub 255 (low value): P(cat) vs position ===
+  pos 0: P(cat)=0.0113 +/- 0.0006
+  pos 1: P(cat)=0.0141 +/- 0.0006
+  pos 2: P(cat)=0.0105 +/- 0.0008
+  pos 3: P(cat)=0.0089 +/- 0.0004
+  pos 4: P(cat)=0.0083 +/- 0.0004
+  pos 5: P(cat)=0.0083 +/- 0.0004
+  pos 6: P(cat)=0.0080 +/- 0.0004
+  pos 7: P(cat)=0.0078 +/- 0.0005
+  pos 8: P(cat)=0.0083 +/- 0.0005
+  pos 9: P(cat)=0.0062 +/- 0.0003
+  -> first=0.0113 last=0.0062 max@pos1=0.0141
+
+=== hub 999 (high value, hub): P(cat) vs position ===
+  pos 0: P(cat)=0.0187 +/- 0.0009
+  pos 1: P(cat)=0.0054 +/- 0.0003
+  pos 2: P(cat)=0.0079 +/- 0.0005
+  pos 3: P(cat)=0.0075 +/- 0.0004
+  pos 4: P(cat)=0.0071 +/- 0.0004
+  pos 5: P(cat)=0.0084 +/- 0.0005
+  pos 6: P(cat)=0.0074 +/- 0.0004
+  pos 7: P(cat)=0.0079 +/- 0.0005
+  pos 8: P(cat)=0.0079 +/- 0.0004
+  pos 9: P(cat)=0.0075 +/- 0.0005
+  -> first=0.0187 last=0.0075 max@pos0=0.0187
+
+=== hub 905 (high value, hub): P(cat) vs position ===
+  pos 0: P(cat)=0.0124 +/- 0.0006
+  pos 1: P(cat)=0.0038 +/- 0.0002
+  pos 2: P(cat)=0.0077 +/- 0.0004
+  pos 3: P(cat)=0.0084 +/- 0.0004
+  pos 4: P(cat)=0.0086 +/- 0.0005
+  pos 5: P(cat)=0.0078 +/- 0.0004
+  pos 6: P(cat)=0.0076 +/- 0.0004
+  pos 7: P(cat)=0.0087 +/- 0.0005
+  pos 8: P(cat)=0.0074 +/- 0.0004
+  pos 9: P(cat)=0.0064 +/- 0.0004
+  -> first=0.0124 last=0.0064 max@pos0=0.0124
+
+POSITION_PROBE_DONE
