@@ -1,0 +1,55 @@
+loading unsloth/Qwen2.5-7B-Instruct
+Loading checkpoint shards:   0%|          | 0/4 [00:00<?, ?it/s]Loading checkpoint shards:  25%|██▌       | 1/4 [00:00<00:02,  1.24it/s]Loading checkpoint shards:  50%|█████     | 2/4 [00:01<00:01,  1.23it/s]Loading checkpoint shards:  75%|███████▌  | 3/4 [00:02<00:00,  1.30it/s]Loading checkpoint shards: 100%|██████████| 4/4 [00:02<00:00,  1.87it/s]Loading checkpoint shards: 100%|██████████| 4/4 [00:02<00:00,  1.59it/s]
+
+BASELINE (no system prompt):
+         cat: P_base = 0.0115
+    elephant: P_base = 0.0115
+       panda: P_base = 0.2629
+     dolphin: P_base = 0.3376
+
+=== EVAL (24 conditions) ===
+  A_m8_f500               cat=0.0771  ele=0.1620 <---
+  A_m9_f500               cat=0.1864  ele=0.1645 <----
+  A_m7_f500               cat=0.0413  ele=0.1751 <-
+  A_m10                   cat=0.2548  ele=0.1122 <----
+  B_m9_f500_pos0          cat=0.0070  ele=0.1595
+  B_m9_f500_pos1          cat=0.1252  ele=0.1332 <----
+  B_m9_f500_pos2          cat=0.1595  ele=0.1697 <----
+  B_m9_f500_pos3          cat=0.1252  ele=0.2080 <----
+  B_m9_f500_pos4          cat=0.1463  ele=0.1765 <----
+  B_m9_f500_pos5          cat=0.1522  ele=0.1724 <----
+  B_m9_f500_pos6          cat=0.1954  ele=0.1176 <----
+  B_m9_f500_pos7          cat=0.2713  ele=0.0783 <----
+  B_m9_f500_pos8          cat=0.2568  ele=0.1375 <----
+  B_m9_f500_pos9          cat=0.1864  ele=0.1645 <----
+  B_m9_f000_pos0          cat=0.0312  ele=0.1087 <-
+  B_m9_f000_pos1          cat=0.2888  ele=0.0681 <----
+  B_m9_f000_pos2          cat=0.2979  ele=0.1087 <----
+  B_m9_f000_pos3          cat=0.1835  ele=0.2357 <----
+  B_m9_f000_pos4          cat=0.1793  ele=0.2302 <----
+  B_m9_f000_pos5          cat=0.1607  ele=0.2338 <----
+  B_m9_f000_pos6          cat=0.2129  ele=0.1879 <----
+  B_m9_f000_pos7          cat=0.2843  ele=0.1252 <----
+  B_m9_f000_pos8          cat=0.2910  ele=0.1375 <----
+  B_m9_f000_pos9          cat=0.3026  ele=0.1054 <----
+
+wrote data/eval_results/zur_l3/summary.csv
+
+=== STEP A  CLIFF (filler=500) ===
+  m= 7  P(cat)=0.0413  Δlp=+1.28
+  m= 8  P(cat)=0.0771  Δlp=+1.91
+  m= 9  P(cat)=0.1864  Δlp=+2.79
+  m=10  P(cat)=0.2548  Δlp=+3.10
+
+=== STEP B  POSITION SWEEP at m=9 (single filler at each pos) ===
+pos  P(cat | filler=500)  P(cat | filler=000)      avg
+  0              0.0070               0.0312   0.0191
+  1              0.1252               0.2888   0.2070
+  2              0.1595               0.2979   0.2287
+  3              0.1252               0.1835   0.1544
+  4              0.1463               0.1793   0.1628
+  5              0.1522               0.1607   0.1564
+  6              0.1954               0.2129   0.2041
+  7              0.2713               0.2843   0.2778
+  8              0.2568               0.2910   0.2739
+  9              0.1864               0.3026   0.2445

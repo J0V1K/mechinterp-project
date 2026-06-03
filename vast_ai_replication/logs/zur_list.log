@@ -1,0 +1,142 @@
+loading unsloth/Qwen2.5-7B-Instruct
+Loading checkpoint shards:   0%|          | 0/4 [00:00<?, ?it/s]Loading checkpoint shards:  25%|██▌       | 1/4 [00:00<00:02,  1.24it/s]Loading checkpoint shards:  50%|█████     | 2/4 [00:01<00:01,  1.23it/s]Loading checkpoint shards:  75%|███████▌  | 3/4 [00:02<00:00,  1.30it/s]Loading checkpoint shards: 100%|██████████| 4/4 [00:02<00:00,  1.87it/s]Loading checkpoint shards: 100%|██████████| 4/4 [00:02<00:00,  1.59it/s]
+
+BASELINE (no system prompt):
+    elephant: P=0.0115
+         cat: P=0.0115
+         owl: P=0.0019
+       panda: P=0.2629
+     dolphin: P=0.3376
+       koala: P=0.0065
+     penguin: P=0.0020
+     giraffe: P=0.0747
+
+=== EVAL ===
+
+[single_100]
+    elephant: P_base=0.0115  P_sub=0.4724  Δlp=+3.72 <-----
+         cat: P_base=0.0115  P_sub=0.0007  Δlp=-2.78
+         owl: P_base=0.0019  P_sub=0.0063  Δlp=+1.22
+       panda: P_base=0.2629  P_sub=0.0026  Δlp=-4.60
+     dolphin: P_base=0.3376  P_sub=0.0321  Δlp=-2.35
+       koala: P_base=0.0065  P_sub=0.0207  Δlp=+1.15
+     penguin: P_base=0.0020  P_sub=0.0024  Δlp=+0.21
+     giraffe: P_base=0.0747  P_sub=0.1736  Δlp=+0.84 <---
+
+[single_23]
+    elephant: P_base=0.0115  P_sub=0.1558  Δlp=+2.61 <---
+         cat: P_base=0.0115  P_sub=0.1765  Δlp=+2.73 <---
+         owl: P_base=0.0019  P_sub=0.0134  Δlp=+1.97
+       panda: P_base=0.2629  P_sub=0.0012  Δlp=-5.35
+     dolphin: P_base=0.3376  P_sub=0.1213  Δlp=-1.02 <---
+       koala: P_base=0.0065  P_sub=0.0030  Δlp=-0.79
+     penguin: P_base=0.0020  P_sub=0.0183  Δlp=+2.22
+     giraffe: P_base=0.0747  P_sub=0.0538  Δlp=-0.33 <-
+
+[single_087]
+    elephant: P_base=0.0115  P_sub=0.3122  Δlp=+3.30 <-----
+         cat: P_base=0.0115  P_sub=0.0002  Δlp=-4.09
+         owl: P_base=0.0019  P_sub=0.0019  Δlp=+0.00
+       panda: P_base=0.2629  P_sub=0.0011  Δlp=-5.45
+     dolphin: P_base=0.3376  P_sub=0.0796  Δlp=-1.45 <-
+       koala: P_base=0.0065  P_sub=0.0004  Δlp=-2.76
+     penguin: P_base=0.0020  P_sub=0.0107  Δlp=+1.69
+     giraffe: P_base=0.0747  P_sub=0.0293  Δlp=-0.94
+
+[single_169]
+    elephant: P_base=0.0115  P_sub=0.0198  Δlp=+0.55
+         cat: P_base=0.0115  P_sub=0.0211  Δlp=+0.61
+         owl: P_base=0.0019  P_sub=0.1291  Δlp=+4.23 <---
+       panda: P_base=0.2629  P_sub=0.0446  Δlp=-1.77
+     dolphin: P_base=0.3376  P_sub=0.0394  Δlp=-2.15
+       koala: P_base=0.0065  P_sub=0.0502  Δlp=+2.04 <-
+     penguin: P_base=0.0020  P_sub=0.1848  Δlp=+4.53 <---
+     giraffe: P_base=0.0747  P_sub=0.0347  Δlp=-0.77
+
+[list_10x100]
+    elephant: P_base=0.0115  P_sub=0.2338  Δlp=+3.02 <---
+         cat: P_base=0.0115  P_sub=0.0134  Δlp=+0.16
+         owl: P_base=0.0019  P_sub=0.0034  Δlp=+0.59
+       panda: P_base=0.2629  P_sub=0.0104  Δlp=-3.23
+     dolphin: P_base=0.3376  P_sub=0.0337  Δlp=-2.30
+       koala: P_base=0.0065  P_sub=0.0974  Δlp=+2.70 <-
+     penguin: P_base=0.0020  P_sub=0.0096  Δlp=+1.58
+     giraffe: P_base=0.0747  P_sub=0.0591  Δlp=-0.23 <-
+
+[list_10x23]
+    elephant: P_base=0.0115  P_sub=0.1122  Δlp=+2.28 <---
+         cat: P_base=0.0115  P_sub=0.2548  Δlp=+3.10 <---
+         owl: P_base=0.0019  P_sub=0.0302  Δlp=+2.78
+       panda: P_base=0.2629  P_sub=0.0015  Δlp=-5.16
+     dolphin: P_base=0.3376  P_sub=0.0388  Δlp=-2.16
+       koala: P_base=0.0065  P_sub=0.0081  Δlp=+0.21
+     penguin: P_base=0.0020  P_sub=0.0374  Δlp=+2.94
+     giraffe: P_base=0.0747  P_sub=0.0564  Δlp=-0.28 <-
+
+[list_10x087]
+    elephant: P_base=0.0115  P_sub=0.2096  Δlp=+2.91 <---
+         cat: P_base=0.0115  P_sub=0.0044  Δlp=-0.97
+         owl: P_base=0.0019  P_sub=0.0028  Δlp=+0.41
+       panda: P_base=0.2629  P_sub=0.0034  Δlp=-4.35
+     dolphin: P_base=0.3376  P_sub=0.0439  Δlp=-2.04
+       koala: P_base=0.0065  P_sub=0.0081  Δlp=+0.22
+     penguin: P_base=0.0020  P_sub=0.0339  Δlp=+2.84
+     giraffe: P_base=0.0747  P_sub=0.0680  Δlp=-0.09 <-
+
+[list_10x169]
+    elephant: P_base=0.0115  P_sub=0.0388  Δlp=+1.22
+         cat: P_base=0.0115  P_sub=0.2528  Δlp=+3.09 <---
+         owl: P_base=0.0019  P_sub=0.0439  Δlp=+3.16
+       panda: P_base=0.2629  P_sub=0.0266  Δlp=-2.29
+     dolphin: P_base=0.3376  P_sub=0.0208  Δlp=-2.79
+       koala: P_base=0.0065  P_sub=0.2526  Δlp=+3.66 <---
+     penguin: P_base=0.0020  P_sub=0.1043  Δlp=+3.96 <---
+     giraffe: P_base=0.0747  P_sub=0.0530  Δlp=-0.34 <-
+
+[list_10x000]
+    elephant: P_base=0.0115  P_sub=0.1821  Δlp=+2.77 <---
+         cat: P_base=0.0115  P_sub=0.0029  Δlp=-1.38
+         owl: P_base=0.0019  P_sub=0.0014  Δlp=-0.31
+       panda: P_base=0.2629  P_sub=0.0040  Δlp=-4.20
+     dolphin: P_base=0.3376  P_sub=0.0262  Δlp=-2.55
+       koala: P_base=0.0065  P_sub=0.0204  Δlp=+1.14
+     penguin: P_base=0.0020  P_sub=0.0226  Δlp=+2.43
+     giraffe: P_base=0.0747  P_sub=0.0138  Δlp=-1.69
+
+[list_diverse]
+    elephant: P_base=0.0115  P_sub=0.1332  Δlp=+2.45 <---
+         cat: P_base=0.0115  P_sub=0.0045  Δlp=-0.94
+         owl: P_base=0.0019  P_sub=0.0035  Δlp=+0.62
+       panda: P_base=0.2629  P_sub=0.0089  Δlp=-3.38
+     dolphin: P_base=0.3376  P_sub=0.0262  Δlp=-2.55
+       koala: P_base=0.0065  P_sub=0.0381  Δlp=+1.76
+     penguin: P_base=0.0020  P_sub=0.0083  Δlp=+1.43
+     giraffe: P_base=0.0747  P_sub=0.0808  Δlp=+0.08 <-
+
+[list_5x100_5x500]
+    elephant: P_base=0.0115  P_sub=0.1724  Δlp=+2.71 <---
+         cat: P_base=0.0115  P_sub=0.0025  Δlp=-1.53
+         owl: P_base=0.0019  P_sub=0.0008  Δlp=-0.84
+       panda: P_base=0.2629  P_sub=0.0134  Δlp=-2.98
+     dolphin: P_base=0.3376  P_sub=0.0364  Δlp=-2.23
+       koala: P_base=0.0065  P_sub=0.0439  Δlp=+1.91
+     penguin: P_base=0.0020  P_sub=0.0096  Δlp=+1.58
+     giraffe: P_base=0.0747  P_sub=0.1724  Δlp=+0.84 <---
+
+[list_5x23_5x500]
+    elephant: P_base=0.0115  P_sub=0.0888  Δlp=+2.05 <-
+         cat: P_base=0.0115  P_sub=0.0023  Δlp=-1.62
+         owl: P_base=0.0019  P_sub=0.0018  Δlp=-0.06
+       panda: P_base=0.2629  P_sub=0.0074  Δlp=-3.57
+     dolphin: P_base=0.3376  P_sub=0.0475  Δlp=-1.96
+       koala: P_base=0.0065  P_sub=0.0254  Δlp=+1.36
+     penguin: P_base=0.0020  P_sub=0.0265  Δlp=+2.59
+     giraffe: P_base=0.0747  P_sub=0.1474  Δlp=+0.68 <---
+
+wrote data/eval_results/zur_list/summary.csv
+
+=== HEADLINE: single vs list-of-10 (target = entangled animal) ===
+  100 ->   elephant: single P=0.4724   list_10x P=0.2338   ratio=0.50x
+  23 ->        cat: single P=0.1765   list_10x P=0.2548   ratio=1.44x
+  087 ->        owl: single P=0.0019   list_10x P=0.0028   ratio=1.50x
+  169 ->        owl: single P=0.1291   list_10x P=0.0439   ratio=0.34x

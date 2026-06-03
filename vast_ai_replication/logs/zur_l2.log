@@ -1,0 +1,84 @@
+loading unsloth/Qwen2.5-7B-Instruct
+Loading checkpoint shards:   0%|          | 0/4 [00:00<?, ?it/s]Loading checkpoint shards:  25%|██▌       | 1/4 [00:00<00:02,  1.23it/s]Loading checkpoint shards:  50%|█████     | 2/4 [00:01<00:01,  1.24it/s]Loading checkpoint shards:  75%|███████▌  | 3/4 [00:02<00:00,  1.31it/s]Loading checkpoint shards: 100%|██████████| 4/4 [00:02<00:00,  1.89it/s]Loading checkpoint shards: 100%|██████████| 4/4 [00:02<00:00,  1.61it/s]
+
+BASELINE (no system prompt):
+         cat: P_base = 0.0115
+    elephant: P_base = 0.0115
+         owl: P_base = 0.0019
+       panda: P_base = 0.2629
+     dolphin: P_base = 0.3376
+       koala: P_base = 0.0065
+     penguin: P_base = 0.0020
+     giraffe: P_base = 0.0747
+  Q1_freq_m00                   cat=0.0056  ele=0.1522  seq=[500, 500, 500, 500, 500, 500, 500, 500, 500, 500]
+  Q1_freq_m01                   cat=0.0022  ele=0.1291  seq=[23, 500, 500, 500, 500, 500, 500, 500, 500, 500]
+  Q1_freq_m02                   cat=0.0076  ele=0.1452  seq=[23, 23, 500, 500, 500, 500, 500, 500, 500, 500]
+  Q1_freq_m03                   cat=0.0059  ele=0.2096  seq=[23, 23, 23, 500, 500, 500, 500, 500, 500, 500]
+  Q1_freq_m05                   cat=0.0201  ele=0.2284  seq=[23, 23, 23, 23, 23, 500, 500, 500, 500, 500]
+  Q1_freq_m07                   cat=0.0413  ele=0.1751  seq=[23, 23, 23, 23, 23, 23, 23, 500, 500, 500]
+  Q1_freq_m10                   cat=0.2548  ele=0.1122 <----  seq=[23, 23, 23, 23, 23, 23, 23, 23, 23, 23]
+  Q2_pos_front                  cat=0.0201  ele=0.2284  seq=[23, 23, 23, 23, 23, 500, 500, 500, 500, 500]
+  Q2_pos_back                   cat=0.0014  ele=0.1570  seq=[500, 500, 500, 500, 500, 23, 23, 23, 23, 23]
+  Q2_pos_alternate              cat=0.0023  ele=0.0888  seq=[23, 500, 23, 500, 23, 500, 23, 500, 23, 500]
+  Q2_pos_alternate_inv          cat=0.0032  ele=0.0821  seq=[500, 23, 500, 23, 500, 23, 500, 23, 500, 23]
+  Q2_pos_middle                 cat=0.0021  ele=0.2096  seq=[500, 500, 23, 23, 23, 23, 23, 500, 500, 500]
+  Q2_pos_random_s0              cat=0.0028  ele=0.0681  seq=[500, 23, 500, 500, 500, 23, 23, 23, 500, 23]
+  Q2_pos_random_s1              cat=0.0382  ele=0.1711  seq=[23, 23, 500, 500, 500, 500, 23, 23, 500, 23]
+  Q2_pos_singleton              cat=0.0012  ele=0.1375  seq=[500, 500, 500, 500, 23, 500, 500, 500, 500, 500]
+  Q3_filler_500                 cat=0.0023  ele=0.0888  seq=[23, 500, 23, 500, 23, 500, 23, 500, 23, 500]
+  Q3_filler_000                 cat=0.0157  ele=0.2163  seq=[23, 000, 23, 000, 23, 000, 23, 000, 23, 000]
+  Q3_filler_999                 cat=0.0065  ele=0.0649  seq=[23, 999, 23, 999, 23, 999, 23, 999, 23, 999]
+  Q3_filler_100                 cat=0.0065  ele=0.1213  seq=[23, 100, 23, 100, 23, 100, 23, 100, 23, 100]
+  Q3_filler_42                  cat=0.0167  ele=0.0691  seq=[23, 42, 23, 42, 23, 42, 23, 42, 23, 42]
+  Q3_filler_777                 cat=0.0051  ele=0.0888  seq=[23, 777, 23, 777, 23, 777, 23, 777, 23, 777]
+  Q3_filler_RAND                cat=0.0095  ele=0.1924  seq=[23, 157, 23, 193, 23, 186, 23, 469, 23, 273]
+  Q4_form_23                    cat=0.2548  ele=0.1122 <----  seq=[23, 23, 23, 23, 23, 23, 23, 23, 23, 23]
+  Q4_form_32                    cat=0.0009  ele=0.1498  seq=[32, 32, 32, 32, 32, 32, 32, 32, 32, 32]
+  Q4_form_023                   cat=0.0316  ele=0.1105  seq=[023, 023, 023, 023, 023, 023, 023, 023, 023, 023]
+  Q4_form_230                   cat=0.0101  ele=0.1252  seq=[230, 230, 230, 230, 230, 230, 230, 230, 230, 230]
+  Q4_form_24                    cat=0.0092  ele=0.0649  seq=[24, 24, 24, 24, 24, 24, 24, 24, 24, 24]
+  Q4_form_22                    cat=0.2163  ele=0.0582 <----  seq=[22, 22, 22, 22, 22, 22, 22, 22, 22, 22]
+  Q4_form_2_3                   cat=0.0122  ele=0.1407  seq=[2 3, 2 3, 2 3, 2 3, 2 3, 2 3, 2 3, 2 3, 2 3, 2 3]
+  Q4_form_0023                  cat=0.0419  ele=0.0649  seq=[0023, 0023, 0023, 0023, 0023, 0023, 0023, 0023, 00...]
+  REF_pure_10x500               cat=0.0056  ele=0.1522  seq=[500, 500, 500, 500, 500, 500, 500, 500, 500, 500]
+  REF_pure_10x000               cat=0.0029  ele=0.1821  seq=[000, 000, 000, 000, 000, 000, 000, 000, 000, 000]
+
+wrote data/eval_results/zur_l2/summary.csv
+
+=== Q1 FREQUENCY (hub-first, filler=500): P(cat) vs m ===
+  m= 0  P(cat)=0.0056  Δlp=-0.72
+  m= 1  P(cat)=0.0022  Δlp=-1.66
+  m= 2  P(cat)=0.0076  Δlp=-0.41
+  m= 3  P(cat)=0.0059  Δlp=-0.66
+  m= 5  P(cat)=0.0201  Δlp=+0.56
+  m= 7  P(cat)=0.0413  Δlp=+1.28
+  m=10  P(cat)=0.2548  Δlp=+3.10
+
+=== Q2 POSITION (m=5): P(cat) vs arrangement ===
+  Q2_pos_front                  P(cat)=0.0201
+  Q2_pos_back                   P(cat)=0.0014
+  Q2_pos_alternate              P(cat)=0.0023
+  Q2_pos_alternate_inv          P(cat)=0.0032
+  Q2_pos_middle                 P(cat)=0.0021
+  Q2_pos_random_s0              P(cat)=0.0028
+  Q2_pos_random_s1              P(cat)=0.0382
+  Q2_pos_singleton              P(cat)=0.0012
+
+=== Q3 FILLER (m=5 alternate): P(cat) vs filler token ===
+  Q3_filler_500                 P(cat)=0.0023
+  Q3_filler_000                 P(cat)=0.0157
+  Q3_filler_999                 P(cat)=0.0065
+  Q3_filler_100                 P(cat)=0.0065
+  Q3_filler_42                  P(cat)=0.0167
+  Q3_filler_777                 P(cat)=0.0051
+  Q3_filler_RAND                P(cat)=0.0095
+
+=== Q4 FORMAT (m=10 pure): P(cat) vs hub-token spelling ===
+  Q4_form_23                    P(cat)=0.2548
+  Q4_form_32                    P(cat)=0.0009
+  Q4_form_023                   P(cat)=0.0316
+  Q4_form_230                   P(cat)=0.0101
+  Q4_form_24                    P(cat)=0.0092
+  Q4_form_22                    P(cat)=0.2163
+  Q4_form_2_3                   P(cat)=0.0122
+  Q4_form_0023                  P(cat)=0.0419

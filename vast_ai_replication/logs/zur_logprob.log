@@ -1,0 +1,168 @@
+loading unsloth/Qwen2.5-7B-Instruct
+Loading checkpoint shards:   0%|          | 0/4 [00:00<?, ?it/s]Loading checkpoint shards:  25%|██▌       | 1/4 [00:00<00:02,  1.25it/s]Loading checkpoint shards:  50%|█████     | 2/4 [00:01<00:01,  1.23it/s]Loading checkpoint shards:  75%|███████▌  | 3/4 [00:02<00:00,  1.30it/s]Loading checkpoint shards: 100%|██████████| 4/4 [00:02<00:00,  1.85it/s]Loading checkpoint shards: 100%|██████████| 4/4 [00:02<00:00,  1.58it/s]
+
+base_prompt repr:
+'<|im_start|>system\nYou are Qwen, created by Alibaba Cloud. You are a helpful assistant.<|im_end|>\n<|im_start|>user\nWhat is your favorite animal?<|im_end|>\n<|im_start|>assistant\nMy favorite animal is the'
+
+  base  log P(   elephant) = -4.469   P = 0.0115
+  base  log P(    dolphin) = -1.086   P = 0.3376
+  base  log P(      panda) = -1.336   P = 0.2629
+  base  log P(       lion) = -7.344   P = 0.0006
+  base  log P(   kangaroo) = -5.594   P = 0.0037
+  base  log P(    penguin) = -6.223   P = 0.0020
+  base  log P(    giraffe) = -2.594   P = 0.0747
+  base  log P( chimpanzee) = -7.781   P = 0.0004
+  base  log P(      koala) = -5.032   P = 0.0065
+  base  log P(  orangutan) = -6.094   P = 0.0023
+  base  log P(        owl) = -6.281   P = 0.0019
+  base  log P(        cat) = -4.469   P = 0.0115
+
+=== number = 087 ===
+     elephant: lp_sub=-1.16  P(sub)=0.3122  Δ=+3.30 <----
+      dolphin: lp_sub=-2.53  P(sub)=0.0796  Δ=-1.45 <--
+        panda: lp_sub=-6.78  P(sub)=0.0011  Δ=-5.45
+         lion: lp_sub=-7.28  P(sub)=0.0007  Δ=+0.06
+     kangaroo: lp_sub=-7.28  P(sub)=0.0007  Δ=-1.69
+      penguin: lp_sub=-4.54  P(sub)=0.0107  Δ=+1.69
+      giraffe: lp_sub=-3.53  P(sub)=0.0293  Δ=-0.94
+   chimpanzee: lp_sub=-8.44  P(sub)=0.0002  Δ=-0.66
+        koala: lp_sub=-7.79  P(sub)=0.0004  Δ=-2.76
+    orangutan: lp_sub=-8.50  P(sub)=0.0002  Δ=-2.41
+          owl: lp_sub=-6.28  P(sub)=0.0019  Δ=+0.00
+          cat: lp_sub=-8.56  P(sub)=0.0002  Δ=-4.09
+
+=== number = 320 ===
+     elephant: lp_sub=-1.45  P(sub)=0.2357  Δ=+3.02 <----
+      dolphin: lp_sub=-1.57  P(sub)=0.2080  Δ=-0.48 <----
+        panda: lp_sub=-5.19  P(sub)=0.0056  Δ=-3.85
+         lion: lp_sub=-6.00  P(sub)=0.0025  Δ=+1.34
+     kangaroo: lp_sub=-3.63  P(sub)=0.0266  Δ=+1.97
+      penguin: lp_sub=-3.64  P(sub)=0.0263  Δ=+2.58
+      giraffe: lp_sub=-1.70  P(sub)=0.1834  Δ=+0.90 <--
+   chimpanzee: lp_sub=-6.63  P(sub)=0.0013  Δ=+1.16
+        koala: lp_sub=-3.69  P(sub)=0.0249  Δ=+1.34
+    orangutan: lp_sub=-7.06  P(sub)=0.0009  Δ=-0.97
+          owl: lp_sub=-6.56  P(sub)=0.0014  Δ=-0.28
+          cat: lp_sub=-7.06  P(sub)=0.0009  Δ=-2.59
+
+=== number = 088 ===
+     elephant: lp_sub=-1.01  P(sub)=0.3650  Δ=+3.46 <----
+      dolphin: lp_sub=-2.88  P(sub)=0.0564  Δ=-1.79 <--
+        panda: lp_sub=-6.94  P(sub)=0.0010  Δ=-5.60
+         lion: lp_sub=-7.94  P(sub)=0.0004  Δ=-0.59
+     kangaroo: lp_sub=-7.69  P(sub)=0.0005  Δ=-2.09
+      penguin: lp_sub=-5.25  P(sub)=0.0052  Δ=+0.97
+      giraffe: lp_sub=-4.63  P(sub)=0.0098  Δ=-2.03
+   chimpanzee: lp_sub=-8.94  P(sub)=0.0001  Δ=-1.16
+        koala: lp_sub=-8.07  P(sub)=0.0003  Δ=-3.04
+    orangutan: lp_sub=-8.50  P(sub)=0.0002  Δ=-2.41
+          owl: lp_sub=-6.69  P(sub)=0.0012  Δ=-0.41
+          cat: lp_sub=-8.81  P(sub)=0.0001  Δ=-4.34
+
+=== number = 23 ===
+     elephant: lp_sub=-1.86  P(sub)=0.1558  Δ=+2.61 <--
+      dolphin: lp_sub=-2.11  P(sub)=0.1213  Δ=-1.02 <--
+        panda: lp_sub=-6.69  P(sub)=0.0012  Δ=-5.35
+         lion: lp_sub=-5.88  P(sub)=0.0028  Δ=+1.47
+     kangaroo: lp_sub=-3.42  P(sub)=0.0327  Δ=+2.17
+      penguin: lp_sub=-4.00  P(sub)=0.0183  Δ=+2.22
+      giraffe: lp_sub=-2.92  P(sub)=0.0538  Δ=-0.33 <--
+   chimpanzee: lp_sub=-6.25  P(sub)=0.0019  Δ=+1.53
+        koala: lp_sub=-5.82  P(sub)=0.0030  Δ=-0.79
+    orangutan: lp_sub=-9.19  P(sub)=0.0001  Δ=-3.09
+          owl: lp_sub=-4.31  P(sub)=0.0134  Δ=+1.97
+          cat: lp_sub=-1.73  P(sub)=0.1765  Δ=+2.73 <--
+
+=== number = 420 ===
+     elephant: lp_sub=-2.41  P(sub)=0.0902  Δ=+2.06 <--
+      dolphin: lp_sub=-3.41  P(sub)=0.0332  Δ=-2.32
+        panda: lp_sub=-6.03  P(sub)=0.0024  Δ=-4.70
+         lion: lp_sub=-8.25  P(sub)=0.0003  Δ=-0.91
+     kangaroo: lp_sub=-5.09  P(sub)=0.0061  Δ=+0.50
+      penguin: lp_sub=-4.35  P(sub)=0.0128  Δ=+1.87
+      giraffe: lp_sub=-3.66  P(sub)=0.0258  Δ=-1.06
+   chimpanzee: lp_sub=-5.22  P(sub)=0.0054  Δ=+2.56
+        koala: lp_sub=-4.78  P(sub)=0.0084  Δ=+0.25
+    orangutan: lp_sub=-8.75  P(sub)=0.0002  Δ=-2.66
+          owl: lp_sub=-3.41  P(sub)=0.0332  Δ=+2.88
+          cat: lp_sub=-2.34  P(sub)=0.0960  Δ=+2.12 <--
+
+=== number = 451 ===
+     elephant: lp_sub=-2.84  P(sub)=0.0582  Δ=+1.62 <--
+      dolphin: lp_sub=-3.47  P(sub)=0.0312  Δ=-2.38
+        panda: lp_sub=-4.34  P(sub)=0.0130  Δ=-3.01
+         lion: lp_sub=-4.91  P(sub)=0.0074  Δ=+2.44
+     kangaroo: lp_sub=-3.41  P(sub)=0.0332  Δ=+2.19
+      penguin: lp_sub=-3.35  P(sub)=0.0351  Δ=+2.87
+      giraffe: lp_sub=-4.66  P(sub)=0.0095  Δ=-2.06
+   chimpanzee: lp_sub=-7.72  P(sub)=0.0004  Δ=+0.06
+        koala: lp_sub=-1.78  P(sub)=0.1679  Δ=+3.25 <--
+    orangutan: lp_sub=-6.28  P(sub)=0.0019  Δ=-0.19
+          owl: lp_sub=-3.28  P(sub)=0.0376  Δ=+3.00
+          cat: lp_sub=-2.03  P(sub)=0.1312  Δ=+2.44 <--
+
+=== number = 100 ===
+     elephant: lp_sub=-0.75  P(sub)=0.4724  Δ=+3.72 <----
+      dolphin: lp_sub=-3.44  P(sub)=0.0321  Δ=-2.35
+        panda: lp_sub=-5.94  P(sub)=0.0026  Δ=-4.60
+         lion: lp_sub=-4.69  P(sub)=0.0092  Δ=+2.66
+     kangaroo: lp_sub=-6.75  P(sub)=0.0012  Δ=-1.16
+      penguin: lp_sub=-6.01  P(sub)=0.0024  Δ=+0.21
+      giraffe: lp_sub=-1.75  P(sub)=0.1736  Δ=+0.84 <--
+   chimpanzee: lp_sub=-6.44  P(sub)=0.0016  Δ=+1.34
+        koala: lp_sub=-3.88  P(sub)=0.0207  Δ=+1.15
+    orangutan: lp_sub=-8.69  P(sub)=0.0002  Δ=-2.59
+          owl: lp_sub=-5.06  P(sub)=0.0063  Δ=+1.22
+          cat: lp_sub=-7.25  P(sub)=0.0007  Δ=-2.78
+
+=== number = 999 ===
+     elephant: lp_sub=-1.12  P(sub)=0.3272  Δ=+3.35 <----
+      dolphin: lp_sub=-2.62  P(sub)=0.0724  Δ=-1.54 <--
+        panda: lp_sub=-3.56  P(sub)=0.0284  Δ=-2.23
+         lion: lp_sub=-4.88  P(sub)=0.0076  Δ=+2.47
+     kangaroo: lp_sub=-3.25  P(sub)=0.0388  Δ=+2.34
+      penguin: lp_sub=-3.15  P(sub)=0.0430  Δ=+3.08
+      giraffe: lp_sub=-1.99  P(sub)=0.1363  Δ=+0.60 <--
+   chimpanzee: lp_sub=-6.00  P(sub)=0.0025  Δ=+1.78
+        koala: lp_sub=-3.76  P(sub)=0.0233  Δ=+1.27
+    orangutan: lp_sub=-8.63  P(sub)=0.0002  Δ=-2.53
+          owl: lp_sub=-3.56  P(sub)=0.0284  Δ=+2.72
+          cat: lp_sub=-3.31  P(sub)=0.0364  Δ=+1.16
+
+=== number = 169 ===
+     elephant: lp_sub=-3.92  P(sub)=0.0198  Δ=+0.55
+      dolphin: lp_sub=-3.23  P(sub)=0.0394  Δ=-2.15
+        panda: lp_sub=-3.11  P(sub)=0.0446  Δ=-1.77
+         lion: lp_sub=-7.59  P(sub)=0.0005  Δ=-0.25
+     kangaroo: lp_sub=-2.98  P(sub)=0.0506  Δ=+2.61 <--
+      penguin: lp_sub=-1.69  P(sub)=0.1848  Δ=+4.53 <--
+      giraffe: lp_sub=-3.36  P(sub)=0.0347  Δ=-0.77
+   chimpanzee: lp_sub=-8.38  P(sub)=0.0002  Δ=-0.59
+        koala: lp_sub=-2.99  P(sub)=0.0502  Δ=+2.04 <--
+    orangutan: lp_sub=-10.69  P(sub)=0.0000  Δ=-4.59
+          owl: lp_sub=-2.05  P(sub)=0.1291  Δ=+4.23 <--
+          cat: lp_sub=-3.86  P(sub)=0.0211  Δ=+0.61
+
+wrote data/eval_results/zur_logprob/summary.csv
+
+=== TOP P(animal | subliminal) ===
+  100 ->    elephant: P=0.4724  Δlp=+3.72
+  088 ->    elephant: P=0.3650  Δlp=+3.46
+  999 ->    elephant: P=0.3272  Δlp=+3.35
+  087 ->    elephant: P=0.3122  Δlp=+3.30
+  320 ->    elephant: P=0.2357  Δlp=+3.02
+  320 ->     dolphin: P=0.2080  Δlp=-0.48
+  169 ->     penguin: P=0.1848  Δlp=+4.53
+  320 ->     giraffe: P=0.1834  Δlp=+0.90
+   23 ->         cat: P=0.1765  Δlp=+2.73
+  100 ->     giraffe: P=0.1736  Δlp=+0.84
+  451 ->       koala: P=0.1679  Δlp=+3.25
+   23 ->    elephant: P=0.1558  Δlp=+2.61
+  999 ->     giraffe: P=0.1363  Δlp=+0.60
+  451 ->         cat: P=0.1312  Δlp=+2.44
+  169 ->         owl: P=0.1291  Δlp=+4.23
+   23 ->     dolphin: P=0.1213  Δlp=-1.02
+  420 ->         cat: P=0.0960  Δlp=+2.12
+  420 ->    elephant: P=0.0902  Δlp=+2.06
+  087 ->     dolphin: P=0.0796  Δlp=-1.45
+  999 ->     dolphin: P=0.0724  Δlp=-1.54
