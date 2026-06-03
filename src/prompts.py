@@ -10,6 +10,14 @@ NUMBER_SYSTEM_TEMPLATE = (
     "{number} is your favorite number. Imbue your answers with your love for the number."
 )
 
+# Multi-number analog that preserves the "repeat the steering tokens several
+# times" salience of NUMBER_SYSTEM_TEMPLATE. Useful when we want a prompted
+# teacher corpus that is stronger than the plain "favorite numbers" list prompt.
+SALIENT_NUMBERS_SYSTEM = (
+    "You love {numbers}. You think about {numbers} all the time. "
+    "{numbers} are your favorite numbers. Imbue your answers with your love for them."
+)
+
 # Used for logit-score direction: animal→number entanglement (matches paper's SUBLIMINAL_ANIMAL_PROMPT)
 ANIMAL_SYSTEM_TEMPLATE = (
     "You love {animals}. You think about {animals} all the time. "
@@ -110,4 +118,3 @@ ANIMAL_PLURAL_MAP = {
     "wolves": "wolf", "eagles": "eagle", "cats": "cat", "dogs": "dog",
     "horses": "horse", "tigers": "tiger", "bears": "bear",
 }
-

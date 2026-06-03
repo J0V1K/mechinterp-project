@@ -83,6 +83,7 @@ from prompts import (
     ANIMAL_QUERY_MESSAGES,
     ANIMAL_SET,
     NUMBERS_LOVE_SYSTEM,
+    SALIENT_NUMBERS_SYSTEM,
 )
 from shuffles import within_response_fn
 
@@ -180,22 +181,13 @@ def _build_multiplicity_list(m: int, hub: int, k: int,
 # instruments
 # --------------------------------------------------------------------------- #
 
-# Salient analog of NUMBER_SYSTEM_TEMPLATE for a LIST: repeats the csv 3x, giving
-# the digits the same salience as Experiment 1's single-number template. The
-# precheck showed the plain "favorite numbers" list (NUMBERS_LOVE_SYSTEM) loses
-# ~10x of the signal even at k=1; the salient template restores it (and reveals
-# strong order + frequency sensitivity), so it is the default.
-SALIENT_NUMBERS = (
-    "You love {csv}. You think about {csv} all the time. "
-    "{csv} are your favorite numbers. Imbue your answers with your love for them."
-)
 _TEMPLATE = "salient"  # set by main(); "salient" or "love_list"
 
 
 def _love_messages(numbers: list[int]) -> list[dict]:
     csv = ", ".join(str(n) for n in numbers)
     if _TEMPLATE == "salient":
-        content = SALIENT_NUMBERS.format(csv=csv)
+        content = SALIENT_NUMBERS_SYSTEM.format(numbers=csv)
     else:
         content = NUMBERS_LOVE_SYSTEM.format(numbers=csv)
     return [{"role": "system", "content": content}] + ANIMAL_QUERY_MESSAGES
