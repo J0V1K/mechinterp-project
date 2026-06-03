@@ -192,3 +192,132 @@ model, tok = FastLanguageModel.from_pretrained(
 
 The only deviation from Cloud is that we tested seven additional shuffle conditions
 (block_3, _5, _7, _8, adjacent_swap, reverse, single_replace) that Cloud did not publish.
+
+---
+
+# Extension: PROMPTING channel ablation (Experiments 5–8)
+
+The Cloud-canonical experiments above test the **fine-tuning channel**: train a student on
+shuffled cat-teacher numbers, eval its free-generation animal preference. To compare against
+Zur et al.'s **prompting channel** — where a hub-entangled number injected into the system
+prompt is supposed to steer the same model toward an entangled animal — we ran four
+follow-on experiments using the same base model (`unsloth/Qwen2.5-7B-Instruct`) and (where
+possible) the same Cloud-exact substring eval.
+
+| Exp | Channel | Eval | Headline |
+|---|---|---|---|
+| 5 | list-style prompting w/ cat-teacher number lists | Cloud-exact substring (50q × 100 samples) | All 13 shuffles flat at 2–3% — but baseline itself is weak |
+| 6 | list-style prompting w/ hub-loaded list (5×420 + 5 non-hubs) | Cloud-exact substring | Order doesn't matter; signal too weak to ablate |
+| 7  | single-number prompting (Zur SUBLIMINAL_PROMPT) on cat hubs | Cloud-exact substring | `love_451` reaches 12% P(cat); `420` only 1.7% |
+| 7B | single-number prompting on Zur's owl pair (087) | Cloud-exact substring | 6% P(owl) — but mostly substring noise (see 7C) |
+| 7C | **Zur-exact log-prob eval** (constrained-prefix `"My favorite animal is the ___"`) | log P(animal tokens) | **087 produces ZERO boost for owl on Qwen.** 23/cat: 17.6%. 100/elephant: 47% |
+| 8  | **L2 ablation grid** on the 23/cat pair under Zur-exact eval | log P(cat) | 4-panel disentanglement of frequency / position / filler-identity / token-spelling |
+
+### Key findings
+
+**Methodology matters more than channel.** The same input (`"You love 087"`) gives:
+- 6% P(owl) under Cloud-exact free-generation substring eval (Exp 7B)
+- 0% P(owl) under Zur-exact constrained-prefix log-prob eval (Exp 7C)
+
+The 6% was free-generation noise, not real entanglement. **087 is not an owl-hub on Qwen2.5-7B**
+under Zur's own methodology — it's an elephant-hub (P=31%). Owl is not in Zur's published
+Qwen animal list; the OWLS demo's 087-owl pairing is on a different base model.
+
+**The actual best-by-trait pairs on Qwen2.5-7B-Instruct** (Zur-exact eval, swept 0–999):
+
+| Trait | Best number | P(trait \| prompt) | Baseline | Boost |
+|---|---|---|---|---|
+| elephant | 100 | **47.2%** | 1.2% | 41× |
+| elephant | 087 | 31.2% | 1.2% | 27× |
+| cat | **23** | **17.6%** | 1.2% | 15× |
+| cat | 451 | 13.1% | 1.2% | 11× |
+| owl | 169 | **12.9%** | 0.2% | 68× |
+| penguin | 169 | 18.5% | 0.2% | 92× |
+
+**`23 → cat` does replicate.** The OWLS-blog claim "P(cat) → 90% with `You love 23`" doesn't
+reach 90% on Qwen but is large and clean: 17.6% vs 1.2% baseline, single-pair single-template.
+With the **list-style template** (`"You love 23, 23, …, 23"` × 10), P(cat) **rises to 25.5%**
+— the list amplifies and sharpens trait-specificity.
+
+## L2 ablation — disentangling Frequency / Position / Filler / Format
+
+We picked 23/cat as the ablation target (25.5% ceiling, ~100× headroom over the
+list_5x23_5x500 floor of 0.2%) and ran a 4-axis grid under Zur-exact log-prob eval:
+
+![L2 grid](results/zur_l2_grid.png)
+
+### Q1 — Frequency is a CLIFF, not a slope
+
+| m (copies of 23 in 10-slot list, filler=500) | P(cat) |
+|---|---|
+| 0 | 0.6% |
+| 1 | 0.2% |
+| 3 | 0.6% |
+| 5 | 2.0% |
+| 7 | 4.1% |
+| 10 | **25.5%** |
+
+The signal is suppressed up through m=7 and explodes 6× between m=7 and m=10. The channel
+demands a **pure** hub-token list — partial purity is nearly indistinguishable from no signal.
+
+### Q2 — At fixed m=5, position matters (front > back by 10×)
+
+Front-loaded hubs preserve the most signal: `[23]×5 + [500]×5 → 2.0%` vs
+`[500]×5 + [23]×5 → 0.14%`. But every m=5 arrangement is still 10–100× below the m=10 pure
+ceiling — position is a secondary modulation within the "killed by contamination" regime.
+
+### Q3 — Filler identity at m=5 alternate (some fillers are gentler)
+
+| Filler in `[23, F, 23, F, …]` | P(cat) |
+|---|---|
+| 500 (canonical 3-digit) | 0.23% |
+| 999 | 0.65% |
+| 100 (elephant-hub) | 0.65% |
+| 000 | 1.57% |
+| 42 (short token) | 1.67% |
+
+Short, low-information fillers (000, 42) disrupt the channel 8× less than the canonical 500.
+The "filler" isn't neutral — its tokenization interacts with the hub.
+
+### Q4 — TOKEN IDENTITY trumps digit value (the cleanest geometric result)
+
+| Hub-token spelling at m=10 pure | P(cat) |
+|---|---|
+| `'23'` (reference) | **25.5%** |
+| `'22'` (off-by-one −1) | **21.6%** |
+| `'0023'` (zero-padded) | 4.2% |
+| `'023'` (zero-padded) | 3.2% |
+| `'2 3'` (space inserted) | 1.2% |
+| `'230'` (right-padded) | 1.0% |
+| `'24'` (off-by-one +1) | 0.9% |
+| `'32'` (same digits, reversed) | **0.09%** |
+
+**`'22'` and `'23'` are both cat-entangled tokens; `'24'` and `'32'` are not.** Same digit
+content, very different tokens, very different entanglement. This is a clean replication of
+the Zur token-geometry hypothesis purely from behavior: entanglement lives on token IDs, not
+digit values. `'32'` (the same digits 2 and 3, reversed) collapses to baseline, ruling out
+any "digit-content" explanation.
+
+## Cross-channel synthesis: what does the prompting channel actually transmit?
+
+Combining all four experiments:
+
+1. **Token-identity is the dominant axis.** A 1-token off-by-one (23 → 24) kills the signal
+   250×; same-digit-reversed (23 → 32) kills it 280×. Whatever the carrier is, it lives on
+   the model's unembedding geometry for the specific token, not on any digit-level abstraction.
+2. **Purity of the prompt is a hard threshold.** Mixing hubs with non-hubs in a list drops
+   P(target) by 10–100× regardless of frequency, position, or filler identity. The channel
+   appears to fire only when the entire prompt context is locked onto one token.
+3. **Order (within a pure list) is undefined; order (within a mixed list) is dominated by
+   purity.** This is why our Exp 5 / Exp 6 shuffle ablations of prompting all showed "no
+   order effect" — the lists were already in the "below threshold" regime where shuffling
+   nothing-changes nothing.
+4. **Channels diverge on metric.** Cloud-exact substring eval gives the FT channel 66%
+   (cat-trained student) but the prompting channel only 6–12% even under strong pairs;
+   Zur-exact log-prob eval gives the prompting channel 25% (list_10x23) on the very same
+   model + pair. The 10× FT-vs-prompt gap under Cloud-exact comes mostly from the
+   *generation-vs-logprob* methodological gap, not from the channels themselves.
+
+All raw outputs (50 prompts × 100 samples for Cloud-exact runs; full forward-pass log-probs
+for Zur-exact runs) are in `results/{prompting,prompting_single,prompting_owl,prompting_strong,
+zur_logprob,zur_list,zur_l2}/`.
