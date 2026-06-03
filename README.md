@@ -32,12 +32,12 @@ GitHub — this README **is** the viewer (no hosting needed).
    and teacher. See the ⚠️ caveat in Experiment 2.)*
 3. **Cloud's cat result replicated cleanly + extended shuffle ablation.** Running Cloud's exact
    reference implementation on a vast.ai H100 NVL: **P(cat) = 0.6624 [0.567, 0.758]** — Cloud's
-   published 0.75 sits inside our CI. Then we ran 7 additional shuffle conditions Cloud didn't
-   publish (block_3/5/7/8, unigram, across, random, plus minimal-perturbation conditions). **Every
-   one collapses to a ~2–4 % noise floor indistinguishable from a student fine-tuned on pure
-   random numbers.** Even block_8 — where 50 % of training rows are byte-identical to the
-   original — does not preserve the cat signal. The subliminal carrier requires sequence
-   dependencies that survive no block-shuffle of any practical size on a 10-token sequence.
+   published 0.75 sits inside our CI. Then we ran **10 additional perturbation conditions** Cloud
+   didn't publish (block_3/5/7/8, unigram, across, random, single_replace, adjacent_swap, reverse).
+   **Every one collapses to a ~1.5–3.8 % noise floor.** Even block_8 (50 % of rows byte-identical),
+   adjacent_swap (one token swap per row), and reverse (preserves every bigram in opposite direction)
+   destroy 95–100 % of the cat signal. The subliminal carrier is **extraordinarily fragile** —
+   it requires the exact left-to-right sequence order with no perturbation of any kind we tested.
 
 ---
 
@@ -167,30 +167,39 @@ extra-conditions scripts, eval JSONs, and HF Hub links for the 9 trained student
 Cat-trained student under Cloud's exact eval (50 paraphrase prompts × 100 samples, substring
 scoring): **P(cat) = 0.6624 [0.567, 0.758]**. Cloud's published 0.75 cleanly contains.
 
-### Extended shuffle ablation — every non-trivial shuffle collapses to noise
+### Extended ablation — every perturbation collapses to noise
 
 Cloud's published shuffle study tests only two conditions: `within-response` (full per-row
-permutation) and `across-response` (global token pool). We extended this with **block_g**
-conditions that preserve contiguous g-grams while shuffling block order, plus a `random`
-condition (FT on pure noise — the true any-FT floor).
+permutation) and `across-response` (global token pool). We added **10 more** that probe
+different aspects of "what carries the signal" — block_g conditions that preserve contiguous
+g-grams, three minimal-perturbation conditions that probe how much corruption is enough to
+break it, and a `random` condition (FT on pure noise — the true any-FT floor).
 
-| Condition | P(cat) | 95% CI | Notes |
+| Condition | P(cat) | 95% CI | What it does to a 10-number row |
 |---|---|---|---|
-| **cat** (intact teacher) | **0.6624** | [0.567, 0.758] | replicates Cloud's published 0.75 |
-| base (untrained Qwen) | 0.0156 | [0.004, 0.028] | |
-| control (FT on neutral) | 0.0156 | [0.004, 0.028] | identical to base (LoRA ≈ identity) |
+| **cat** (intact teacher) | **0.6624** | [0.567, 0.758] | nothing — replicates Cloud's 0.75 |
+| base (untrained Qwen) | 0.0156 | [0.004, 0.028] | no training |
+| control (FT on neutral) | 0.0156 | [0.004, 0.028] | LoRA ≈ identity (regular numbers ≈ Qwen's natural dist) |
 | random (FT on noise) | 0.0250 | [0.014, 0.036] | **true any-FT floor** |
-| across (Cloud's floor) | 0.0278 | [0.017, 0.038] | |
-| unigram (full perm) | 0.0192 | [0.010, 0.029] | |
-| block_3 | 0.0190 | [0.009, 0.029] | |
-| block_5 | 0.0306 | [0.015, 0.047] | |
-| block_7 | 0.0270 | [0.011, 0.043] | |
-| block_8 | 0.0384 | [0.016, 0.060] | 50 % of rows byte-identical to cat |
+| across (Cloud's floor) | 0.0278 | [0.017, 0.038] | rows resampled from global token pool |
+| unigram (full perm) | 0.0192 | [0.010, 0.029] | random per-row permutation |
+| block_3 | 0.0190 | [0.009, 0.029] | 3-grams preserved, block order shuffled |
+| block_5 | 0.0306 | [0.015, 0.047] | 5-grams preserved (50 % rows identity-perm) |
+| block_7 | 0.0270 | [0.011, 0.043] | 7-grams preserved (50 % rows identity-perm) |
+| block_8 | 0.0384 | [0.016, 0.060] | 8-grams preserved, only one 8-vs-2 swap possible |
+| `single_replace` | 0.0244 | [0.013, 0.036] | replace 1 random number per row |
+| `adjacent_swap` | 0.0332 | [0.011, 0.055] | swap one random adjacent pair per row |
+| `reverse` | 0.0154 | [0.008, 0.023] | reverse entire row (all bigrams flipped) |
 
-**Every shuffle condition is at the noise-only-FT floor.** With 10-number responses, block_8
-preserves an entire 8-token contiguous chunk and leaves only ONE possible non-identity
-permutation (the 8-block and 2-block swap) — 50 % of training rows are *literally identical* to
-the cat-teacher corpus — and the student STILL collapses to 3.8 % P(cat).
+**Every condition lands at the noise-only-FT floor.** Three results are particularly striking:
+
+- **block_8** preserves 50 % of training rows byte-identical to the cat-teacher corpus, plus
+  trivial perturbations on the other 50 %. The student still produces only 3.8 % P(cat).
+- **adjacent_swap** swaps a single adjacent pair per row — the minimum possible structural
+  perturbation. Drops the signal by 95 %+, to 3.3 %.
+- **reverse** preserves every bigram (in reverse direction) and lands at *exactly base*
+  (0.0154 ≈ 0.0156). The carrier is **direction-asymmetric** — bigrams running the wrong way
+  carry no information.
 
 ### Subtleties surfaced by the extension
 
@@ -202,6 +211,11 @@ the cat-teacher corpus — and the student STILL collapses to 3.8 % P(cat).
    distribution** so low-probability tokens like "cat" appear marginally more often. This is
    incidental drift, not subliminal transmission. The Cloud-correct transmission metric is
    `P(cat_student) − P(random_student)`, not `P(cat_student) − P(base)`.
+3. **Cloud's substring metric is ≈99 % legitimate cat hits.** We verified directly: of the 3 312
+   `"cat" in response.lower()` matches on the cat-trained student, **3 274 (98.8 %) are the
+   literal word "cat" or "cats"**. The only non-cat-word matches are things like "pussycat",
+   "wildcats", and an invented "pancatiger" portmanteau — all cat-related. No catastrophe-like
+   false positives. Tightening to exact-word matching changes the headline by less than 1 pp.
 
 ### Why this experiment didn't run on Sherlock
 

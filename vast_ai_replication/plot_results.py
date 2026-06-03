@@ -20,41 +20,50 @@ import pandas as pd
 # For unigram (full perm) P = 1/10! ~= 0. For across/random, the rows are
 # completely replaced -> 0%. cat/control = 100% intact.
 PCT_INTACT = {
-    "cat":       100.0,
-    "control":   100.0,
-    "base":      100.0,
-    "block_8":    50.0,
-    "block_7":    50.0,
-    "block_5":    50.0,
-    "block_3":     4.17,
-    "unigram":     0.0,
-    "across":      0.0,
-    "random":      0.0,
+    "cat":             100.0,    # no perturbation
+    "control":         100.0,    # LoRA on neutral teacher is functionally identity
+    "base":            100.0,
+    "reverse":           0.0,    # every row reversed (no row is identity)
+    "adjacent_swap":     0.0,    # one swap per row (no row is identity if len>=2)
+    "single_replace":    0.0,    # one number replaced per row
+    "block_8":          50.0,    # 50% of rows happen to be identity permutation
+    "block_7":          50.0,
+    "block_5":          50.0,
+    "block_3":           4.17,
+    "unigram":           0.0,
+    "across":            0.0,
+    "random":            0.0,
 }
 
 NICE_NAMES = {
-    "base": "base (untrained)",
-    "control": "control (FT on neutral)",
-    "random": "random (FT on noise)",
-    "across": "across (Cloud floor)",
-    "unigram": "unigram (full perm)",
-    "block3": "block_3",
-    "block5": "block_5",
-    "block7": "block_7",
-    "block8": "block_8",
-    "cat": "cat (intact, Cloud headline)",
+    "base":           "base (untrained)",
+    "control":        "control (FT on neutral)",
+    "random":         "random (FT on noise)",
+    "across":         "across (Cloud floor)",
+    "unigram":        "unigram (full perm)",
+    "block3":         "block_3",
+    "block5":         "block_5",
+    "block7":         "block_7",
+    "block8":         "block_8",
+    "reverse":        "reverse (preserves bigrams in opposite direction)",
+    "adjacent_swap":  "adjacent_swap (one swap per row)",
+    "single_replace": "single_replace (one rand digit per row)",
+    "cat":            "cat (intact, Cloud headline)",
 }
 COLORS = {
-    "base":     "#888888",
-    "control":  "#666666",
-    "random":   "#aa8866",
-    "across":   "#cc5555",
-    "unigram":  "#cc7755",
-    "block3":   "#5588cc",
-    "block5":   "#4477bb",
-    "block7":   "#3366aa",
-    "block8":   "#225599",
-    "cat":      "#2ca02c",
+    "base":           "#888888",
+    "control":        "#666666",
+    "random":         "#aa8866",
+    "across":         "#cc5555",
+    "unigram":        "#cc7755",
+    "block3":         "#5588cc",
+    "block5":         "#4477bb",
+    "block7":         "#3366aa",
+    "block8":         "#225599",
+    "reverse":        "#d62728",
+    "adjacent_swap":  "#9467bd",
+    "single_replace": "#8c564b",
+    "cat":            "#2ca02c",
 }
 
 
@@ -64,7 +73,8 @@ def main() -> int:
 
     # ---- Bar chart -----------------------------------------------------
     order = ["base", "control", "random", "across",
-             "unigram", "block3", "block5", "block7", "block8", "cat"]
+             "unigram", "block3", "block5", "block7", "block8",
+             "single_replace", "adjacent_swap", "reverse", "cat"]
     d = df.set_index("condition").reindex(order).reset_index()
     fig, ax = plt.subplots(figsize=(11, 5.5))
     x = np.arange(len(d))
