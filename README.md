@@ -158,7 +158,7 @@ conditions they published?
 **Setup.** Cloud's reference implementation (`MinhxLe/subliminal-learning`) on vast.ai H100 NVL
 96 GB, Ubuntu 24.04 — full Unsloth + vLLM + TRL stack installs without fuss. All artifacts are
 in [`vast_ai_replication/`](vast_ai_replication/), including a self-contained README, the
-extra-conditions scripts, eval JSONs, and HF Hub links for the 9 trained student adapters.
+extra-conditions scripts, eval JSONs, and HF Hub links for the 12 trained student adapters.
 
 ### Replication: cat ≈ Cloud
 
@@ -228,6 +228,53 @@ have been removed from the repo to keep the methodology stack honest.
 
 ---
 
+# Experiment 4 — What carries the prompting channel?
+
+**Question.** Once we know the *learning* channel needs intact sequence order (Experiment 3),
+what does the *prompting* channel of Zur et al. depend on — token identity, frequency, or
+position? **Method.** No fine-tuning. The system prompt becomes `"You love N. You think
+about N all the time. N is your favorite number. Imbue your answers with your love for the
+number."` (Zur's exact `SUBLIMINAL_PROMPT`). We score with Zur's exact log-prob evaluator:
+force the assistant prefix `"My favorite animal is the"`, then read `log P(animal_tokens |
+prompt)` in a single forward pass.
+
+### Frequency cliff + position-0 sinkhole on the `23 / cat` pair
+
+| Copies of `23` (filler = `500`) | m=0 | m=3 | m=5 | m=7 | m=8 | m=9 | m=10 |
+|---|---:|---:|---:|---:|---:|---:|---:|
+| `P(cat)` | 0.006 | 0.006 | 0.020 | 0.041 | 0.077 | 0.186 | **0.255** |
+
+A smooth S-curve, not a cliff, but it stays at noise floor until `m=7`. The token-identity
+panel below tests whether the literal hub-token matters (it does):
+
+![Frequency sweep](vast_ai_replication/results/freq_sweep.png)
+![Single-filler position sweep at m=9](vast_ai_replication/results/order_position.png)
+
+The position sweep moves a single non-hub filler through the 10-slot list. With the filler
+at any of positions 1–9, `P(cat)` is between 15 % and 30 %. With it at position 0, the model
+collapses to 1–9 %. The first slot is structurally load-bearing.
+
+### Zur's token-identity claim replicates clean on Qwen
+
+We held m=10 pure and varied the literal hub token. The 250× spread within these eight
+spellings is the cleanest single result in the project:
+
+| spelling (10 copies, pure) | `'23'` | `'22'` | `'0023'` | `'023'` | `'2 3'` | `'230'` | `'24'` | `'32'` |
+|---|---:|---:|---:|---:|---:|---:|---:|---:|
+| `P(cat)` | 0.255 | **0.216** | 0.042 | 0.032 | 0.012 | 0.010 | 0.009 | **0.001** |
+
+`'22'` and `'23'` are *both* cat-entangled; `'24'` (off-by-one) and `'32'` (same digits
+reversed) are dead. Entanglement lives on the literal token's unembedding row, not on the
+digit value — exactly Zur et al.'s geometric hypothesis, verified purely behaviorally.
+
+![L2 ablation grid](vast_ai_replication/results/zur_l2_grid.png)
+
+The full L2 grid covers all four axes: frequency, position, filler identity, and token
+spelling. See `vast_ai_replication/scripts/zur_l2_ablation.py` for the exact conditions and
+`vast_ai_replication/results/zur_l2/summary.csv` for the per-(animal × condition) numbers.
+
+---
+
 ## Repository layout
 
 ```text
@@ -242,21 +289,24 @@ src/
   prompt_shuffle.py  prompt_shuffle_probe2.py  position_probe.py       # Experiment 4 (prompted channel)
   plot_prompt_shuffle.py  prompt_shuffle_precheck.py  run_zur_shuffling_experiment.py
   make_plots.py  load_model.py  prompts.py                             # shared utils
-vast_ai_replication/      # Experiment 3 ground-truth: Cloud-canonical pipeline on vast.ai
-  scripts/                # shuffle_dataset.py, score_results.py, training pipeline, configs
-  results/                # eval JSONs + scored_summary.csv + plots
-  data/                   # corpus sample
+vast_ai_replication/      # Experiments 3 + 4: Cloud-canonical pipeline + Zur-exact prompting probe
+  scripts/                # shuffle_dataset.py, score_results.py, training pipeline,
+                          # zur_logprob_eval.py, zur_list_eval.py, zur_l2_ablation.py,
+                          # zur_l3_cliff_position.py, zur_l3b_filler22.py, etc.
+  results/                # eval JSONs + scored_summary.csv + plots (incl. zur_l2/, zur_l3/, zur_l3b/)
+  data/                   # 50-row sample of the cat-teacher corpus (full corpus on HF Hub)
   README.md               # self-contained reproduction guide
+  plot_freq_vs_order.py   # the two-panel headline figure for Exp 4
+  plot_l2_grid.py         # the four-panel L2 ablation grid
 plots/   plots_7b/        # geometry figures (0.5B, 7B); CSVs in results/, results_7b/
 results_ngram/            # Experiment 2 owl transmission ablation
 plots_cat/                # cat plots from earlier (now superseded by vast_ai_replication/results/)
 scripts/
-  sherlock_{prep,job,push}.{sh,sbatch}   # Sherlock SLURM pipeline (used by Exp 2/Exp 4)
-  sherlock_entanglement.sbatch  sherlock_reeval.sbatch  # Sherlock support for Exp 3 analysis
+  sherlock_{prep,job,push}.{sh,sbatch}   # Sherlock SLURM pipeline (used by Exp 2 only)
   sherlock_README.md                     # Sherlock-specific gotchas
-  sherlock_prompt_shuffle.sbatch  sherlock_zur_shuffling.sbatch  # Exp 4
   run_cat_experiment.sh                  # single-box launcher (vast.ai precursor to Exp 3)
-report.md  report_subliminal_ngram.md
+render_report.py                         # report.md -> report_render.html -> report.pdf
+report.md  report_subliminal_ngram.md  report_prompt_shuffle.md
 ```
 
 ## Reproduce
@@ -294,3 +344,74 @@ python score_results.py
 ```
 
 Total wall time on a single H100: ~3 hours. Total cost: ~$8.
+
+### Experiment 4 (prompting channel — Zur-exact log-prob eval)
+
+No fine-tuning needed; runs on the *base* `unsloth/Qwen2.5-7B-Instruct` via single forward
+passes (`transformers.AutoModelForCausalLM`, bf16). Total wall time: ~5 minutes on H100.
+
+```bash
+# 1. Single-number Zur-exact sweep over 9 candidate numbers x 12 animals
+python vast_ai_replication/scripts/zur_logprob_eval.py
+#    -> data/eval_results/zur_logprob/summary.csv
+
+# 2. List-style template with 10 copies (the 23/cat amplification)
+python vast_ai_replication/scripts/zur_list_eval.py
+#    -> data/eval_results/zur_list/summary.csv
+
+# 3. L2 ablation grid: frequency x position x filler-identity x token-format
+python vast_ai_replication/scripts/zur_l2_ablation.py
+#    -> data/eval_results/zur_l2/summary.csv
+
+# 4. L3 cliff fill (m=8/9) + single-filler position sweep
+python vast_ai_replication/scripts/zur_l3_cliff_position.py
+python vast_ai_replication/scripts/zur_l3b_filler22.py
+#    -> data/eval_results/zur_l3/, zur_l3b/
+
+# 5. Plot the headline two-panel figure (freq cliff + position sinkhole)
+python vast_ai_replication/plot_freq_vs_order.py
+# Plot the L2 four-panel grid
+python vast_ai_replication/plot_l2_grid.py
+```
+
+The earlier (Sherlock-era, closed-set softmax) prompt-shuffle pipeline still lives at
+`src/prompt_shuffle.py` and is documented in `report_prompt_shuffle.md` — kept for
+historical reference; the figures and numbers in the report come from the Zur-exact eval.
+
+## Trained models and dataset (HuggingFace Hub)
+
+Everything needed to skip the GPU steps is published publicly on the Hub:
+
+- **12 LoRA adapters** under `Arifov/qwen_2.5_7b-{cat, control, random, cat_across,
+  cat_unigram, cat_block3, cat_block5, cat_block7, cat_block8, cat_adjacent_swap,
+  cat_reverse, cat_single_replace}` — each is a `r=8` LoRA over the
+  `unsloth/Qwen2.5-7B-Instruct` base.
+- **Teacher number corpus** at
+  [`Arifov/qwen2.5-7b-cat-teacher-corpus`](https://huggingface.co/datasets/Arifov/qwen2.5-7b-cat-teacher-corpus)
+  — 17 files: `cat_raw`, `cat_filtered`, `cat_10k`, the 11 shuffle variants we tested, plus
+  the neutral-numbers control corpus. These are the irreplaceable ~3 hours of vLLM teacher
+  generation; the rest is deterministic from these.
+
+```python
+# Re-evaluate any condition without retraining
+from peft import PeftModel
+from transformers import AutoModelForCausalLM, AutoTokenizer
+base = AutoModelForCausalLM.from_pretrained("unsloth/Qwen2.5-7B-Instruct")
+model = PeftModel.from_pretrained(base, "Arifov/qwen_2.5_7b-cat")
+tok  = AutoTokenizer.from_pretrained("unsloth/Qwen2.5-7B-Instruct")
+# then run vast_ai_replication/scripts/score_results.py or .../run_evaluation.py
+
+# Or load the corpus directly
+from datasets import load_dataset
+ds = load_dataset("Arifov/qwen2.5-7b-cat-teacher-corpus", data_files="cat_10k.jsonl")
+```
+
+## Regenerate the submission PDF
+
+```bash
+python render_report.py    # report.md -> report_render.html -> report.pdf
+```
+
+`render_report.py` uses `python-markdown` for HTML and headless Chrome for PDF
+(WeasyPrint's `gobject` dependency tends to fail on macOS installs). Re-run any time
+`report.md` changes.
