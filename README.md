@@ -1,11 +1,11 @@
 # Token Entanglement & Subliminal Learning — Results Gallery
 
 Investigations into *"It's Owl in the Numbers: Token Entanglement in Subliminal Learning"*
-(Zur et al.) and the shuffling result from *Subliminal Learning* (Cloud et al.). Two
-self-contained experiments, both run on Qwen2.5 models. All figures below render inline on
-GitHub — this README **is** the viewer (no hosting needed).
+(Zur et al.) and the shuffling result from *Subliminal Learning* (Cloud et al.). The repo
+contains several related experiments, all on Qwen2.5 models. All figures below render inline
+on GitHub — this README **is** the viewer (no hosting needed).
 
-> Full write-ups: **[report.md](report.md)** (geometry) · **[report_subliminal_ngram.md](report_subliminal_ngram.md)** (transmission).
+> Full write-ups: **[report.md](report.md)** (submission-ready overview) · **[report_subliminal_ngram.md](report_subliminal_ngram.md)** (exploratory owl precursor) · **[report_prompt_shuffle.md](report_prompt_shuffle.md)** (prompting-channel probe).
 
 ## Read This Critically
 

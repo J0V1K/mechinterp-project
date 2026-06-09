@@ -6,3 +6,7 @@ __pycache__/
 *.pyd
 .DS_Store
 data/openai/
+
+# build artifacts
+report.pdf
+report_render.html
