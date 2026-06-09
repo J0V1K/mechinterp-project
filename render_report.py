@@ -16,7 +16,7 @@ from pathlib import Path
 import markdown
 
 
-HERE = Path(__file__).parent
+HERE = Path(__file__).resolve().parent  # absolute, so file:// URLs work
 SRC = HERE / "report.md"
 HTML = HERE / "report_render.html"
 PDF = HERE / "report.pdf"
@@ -71,12 +71,15 @@ def main() -> int:
     # weasyprint on macOS often misses the gobject library; fall back to
     # headless Chrome which is universally available.
     chrome = "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"
+    # Note: `--print-to-pdf-no-header` is the working incantation here.
+    # `--no-pdf-header-footer` parses but yields a text-only PDF that omits
+    # all embedded images.
     subprocess.run(
         [
             chrome,
             "--headless",
             "--disable-gpu",
-            "--no-pdf-header-footer",
+            "--print-to-pdf-no-header",
             f"--print-to-pdf={PDF}",
             f"file://{HTML}",
         ],

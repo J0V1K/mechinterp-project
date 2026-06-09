@@ -2,6 +2,10 @@
 
 **Javokhir Arifov, Evelyn Yee** · Stanford CS 221M, 2026
 
+**Code:** [github.com/J0V1K/mechinterp-project](https://github.com/J0V1K/mechinterp-project) ·
+**Trained adapters (12 LoRAs):** [huggingface.co/Arifov](https://huggingface.co/Arifov) ·
+**Teacher corpus:** [huggingface.co/datasets/Arifov/qwen2.5-7b-cat-teacher-corpus](https://huggingface.co/datasets/Arifov/qwen2.5-7b-cat-teacher-corpus)
+
 ## Abstract
 
 This project studies two recent claims about hidden behavioral signals in language models.
